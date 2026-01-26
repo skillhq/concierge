@@ -1,5 +1,5 @@
 {
-  "name": "travel-concierge-cli",
+  "name": "@cyberdrk/travel-concierge",
   "version": "1.0.0",
   "description": "Find contact details for accommodation listings (Airbnb, Booking.com, VRBO, Expedia)",
   "type": "module",
@@ -23,6 +23,13 @@
   "keywords": ["travel", "concierge", "airbnb", "booking", "vrbo", "expedia", "contact", "cli"],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cyberdrk305/travel-concierge.git"
+  },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "commander": "^12.0.0",
     "json5": "^2.2.3",
