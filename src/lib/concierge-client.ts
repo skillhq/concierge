@@ -190,7 +190,7 @@ export class ConciergeClient {
       const placesResult = await this.searchGooglePlaces(searchQuery);
 
       if (placesResult.success) {
-        contacts = mergeContacts(contacts, placesResult.data.contacts as ContactInfo);
+        contacts = mergeContacts(contacts, placesResult.data.contacts);
         sources.push(...placesResult.data.sources);
         this.log(`Found via Google Places: ${JSON.stringify(placesResult.data.contacts)}`, verbose);
       } else {
@@ -204,7 +204,7 @@ export class ConciergeClient {
 
       const websiteResult = await this.scrapeContactPage(contacts.website);
       if (websiteResult.success) {
-        contacts = mergeContacts(contacts, websiteResult.data.contacts as ContactInfo);
+        contacts = mergeContacts(contacts, websiteResult.data.contacts);
         sources.push(...websiteResult.data.sources);
         this.log(`Found via website: ${JSON.stringify(websiteResult.data.contacts)}`, verbose);
       }
@@ -221,11 +221,11 @@ export class ConciergeClient {
         if (igContacts.website && !contacts.website) {
           contacts.website = igContacts.website;
         }
-        if (igContacts.email && contacts.email) {
-          contacts.email = [...new Set([...contacts.email, ...igContacts.email])];
+        if (igContacts.email?.length) {
+          contacts.email = [...new Set([...(contacts.email || []), ...igContacts.email])];
         }
-        if (igContacts.phone && contacts.phone) {
-          contacts.phone = [...new Set([...contacts.phone, ...igContacts.phone])];
+        if (igContacts.phone?.length) {
+          contacts.phone = [...new Set([...(contacts.phone || []), ...igContacts.phone])];
         }
         sources.push(...igResult.data.sources);
       }

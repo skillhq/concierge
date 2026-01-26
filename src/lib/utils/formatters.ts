@@ -58,10 +58,10 @@ export function formatGoogleMapsUrl(query: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
-export function mergeContacts(a: ContactInfo, b: ContactInfo): ContactInfo {
+export function mergeContacts(a: ContactInfo, b: Partial<ContactInfo>): ContactInfo {
   return {
-    phone: [...new Set([...a.phone, ...b.phone])],
-    email: [...new Set([...a.email, ...b.email])],
+    phone: [...new Set([...(a.phone || []), ...(b.phone || [])])],
+    email: [...new Set([...(a.email || []), ...(b.email || [])])],
     whatsapp: b.whatsapp || a.whatsapp,
     instagram: b.instagram || a.instagram,
     facebook: b.facebook || a.facebook,

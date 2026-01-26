@@ -103,6 +103,7 @@ export function extractContacts(html: string): ExtractedContacts {
 
   // Extract WhatsApp
   for (const pattern of WHATSAPP_PATTERNS) {
+    pattern.lastIndex = 0; // Reset state for global regex
     let match;
     while ((match = pattern.exec(html)) !== null) {
       const number = match[1].replace(/\D/g, '');
@@ -115,6 +116,7 @@ export function extractContacts(html: string): ExtractedContacts {
 
   // Extract Instagram
   for (const pattern of INSTAGRAM_PATTERNS) {
+    pattern.lastIndex = 0; // Reset state for global regex
     let match;
     while ((match = pattern.exec(html)) !== null) {
       const handle = match[1].toLowerCase();
@@ -127,6 +129,7 @@ export function extractContacts(html: string): ExtractedContacts {
 
   // Extract Facebook
   for (const pattern of FACEBOOK_PATTERNS) {
+    pattern.lastIndex = 0; // Reset state for global regex
     let match;
     while ((match = pattern.exec(html)) !== null) {
       const page = match[1];
