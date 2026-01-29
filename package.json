@@ -1,6 +1,6 @@
 {
-  "name": "@cyberdrk/travel-concierge",
-  "version": "1.0.1",
+  "name": "@skillhq/travel-concierge",
+  "version": "1.1.0",
   "description": "Find contact details for accommodation listings (Airbnb, Booking.com, VRBO, Expedia)",
   "type": "module",
   "main": "dist/index.js",
@@ -34,7 +34,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cyberdrk305/travel-concierge.git"
+    "url": "git+https://github.com/skillhq/travel-concierge.git"
+  },
+  "homepage": "https://github.com/skillhq/travel-concierge#readme",
+  "bugs": {
+    "url": "https://github.com/skillhq/travel-concierge/issues"
   },
   "files": [
     "dist"
