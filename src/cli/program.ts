@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { Command } from 'commander';
 import kleur from 'kleur';
 import { callCommand } from '../commands/call.js';
@@ -5,6 +6,9 @@ import { configCommand } from '../commands/config.js';
 import { findContactCommand } from '../commands/find-contact.js';
 import { serverCommand } from '../commands/server.js';
 import type { CliColors, CliContext } from './shared.js';
+
+const require = createRequire(import.meta.url);
+const pkg = require('../../package.json') as { version: string };
 
 function createColors(): CliColors {
   return {
@@ -25,7 +29,7 @@ export function createProgram(): Command {
   program
     .name('travel-concierge')
     .description('Find contact details for accommodation listings (Airbnb, Booking.com, VRBO, Expedia)')
-    .version('1.0.0');
+    .version(pkg.version);
 
   // Global options
   program.option('--json', 'Output as JSON').option('-v, --verbose', 'Verbose output');
