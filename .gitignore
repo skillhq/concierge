@@ -25,3 +25,9 @@ npm-debug.log*
 
 # Test coverage
 coverage/
+
+# Eval results (generated artifacts)
+eval-results/
+
+# Ad-hoc test scripts
+test-*.mjs
