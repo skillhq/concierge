@@ -46,7 +46,7 @@ export function validateMulawFormat(data: Buffer): { valid: boolean; reason?: st
   }
 
   // Count how many different byte values are used
-  const uniqueValues = histogram.filter(count => count > 0).length;
+  const uniqueValues = histogram.filter((count) => count > 0).length;
 
   // µ-law should have a wide distribution of values (voice uses many levels)
   // Raw MP3 data has very different patterns (frame headers, sync words)
@@ -98,8 +98,7 @@ export async function testStreamingDecoder(
 
   // Check input is actually MP3
   const header = mp3Data.slice(0, 4);
-  const isMP3 = (header[0] === 0xff && (header[1] & 0xe0) === 0xe0) ||
-                header.slice(0, 3).toString() === 'ID3';
+  const isMP3 = (header[0] === 0xff && (header[1] & 0xe0) === 0xe0) || header.slice(0, 3).toString() === 'ID3';
   if (!isMP3) {
     result.errors.push('Input does not appear to be MP3 format');
     return result;
@@ -127,7 +126,7 @@ export async function testStreamingDecoder(
     const chunk = mp3Data.slice(i, i + CHUNK_SIZE);
     decoder.write(chunk);
     // Small delay to simulate streaming
-    await new Promise(r => setTimeout(r, 1));
+    await new Promise((r) => setTimeout(r, 1));
   }
 
   decoder.end();
@@ -161,32 +160,25 @@ export async function testStreamingDecoder(
 /**
  * Test the full TTS pipeline
  */
-export async function testTTSPipeline(
-  text: string,
-  apiKey: string,
-  voiceId: string,
-): Promise<CodecTestResult> {
+export async function testTTSPipeline(text: string, apiKey: string, voiceId: string): Promise<CodecTestResult> {
   // Estimate expected duration (~150ms per word)
   const wordCount = text.split(/\s+/).length;
   const expectedDurationMs = wordCount * 150 + 500; // +500ms buffer
 
   // Get TTS audio
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'xi-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_turbo_v2',
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-        output_format: 'mp3_44100_128',
-      }),
+  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'xi-api-key': apiKey,
     },
-  );
+    body: JSON.stringify({
+      text,
+      model_id: 'eleven_turbo_v2',
+      voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      output_format: 'mp3_44100_128',
+    }),
+  });
 
   if (!response.ok) {
     const error = await response.text();

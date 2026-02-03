@@ -102,11 +102,11 @@ export async function preflightElevenLabsTTSBudget(
     const characterLimit = toNumber(data.character_limit ?? data.characterLimit);
     const characterCount = toNumber(data.character_count ?? data.characterCount);
     const remainingCharsRaw = toNumber(data.remaining_characters ?? data.remainingCharacters);
-    const remainingChars = remainingCharsRaw ?? (
-      characterLimit !== undefined && characterCount !== undefined
+    const remainingChars =
+      remainingCharsRaw ??
+      (characterLimit !== undefined && characterCount !== undefined
         ? Math.max(0, characterLimit - characterCount)
-        : undefined
-    );
+        : undefined);
 
     if (remainingChars === undefined) {
       return {
@@ -153,30 +153,23 @@ export async function preflightElevenLabsTTSBudget(
 /**
  * Internal helper to make TTS API request
  */
-async function makeTTSRequest(
-  config: ElevenLabsConfig,
-  text: string,
-  signal?: AbortSignal,
-): Promise<Response> {
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${config.voiceId}/stream`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'xi-api-key': config.apiKey,
-      },
-      body: JSON.stringify({
-        text,
-        model_id: config.modelId ?? 'eleven_turbo_v2',
-        voice_settings: config.voiceSettings ?? DEFAULT_VOICE_SETTINGS,
-        // ElevenLabs returns MP3 regardless of output_format requested
-        // We convert via ffmpeg, so request high-quality MP3
-        output_format: 'mp3_44100_128',
-      }),
-      signal,
+async function makeTTSRequest(config: ElevenLabsConfig, text: string, signal?: AbortSignal): Promise<Response> {
+  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${config.voiceId}/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'xi-api-key': config.apiKey,
     },
-  );
+    body: JSON.stringify({
+      text,
+      model_id: config.modelId ?? 'eleven_turbo_v2',
+      voice_settings: config.voiceSettings ?? DEFAULT_VOICE_SETTINGS,
+      // ElevenLabs returns MP3 regardless of output_format requested
+      // We convert via ffmpeg, so request high-quality MP3
+      output_format: 'mp3_44100_128',
+    }),
+    signal,
+  });
 
   if (!response.ok) {
     const rawBody = await response.text();
@@ -209,10 +202,7 @@ async function makeTTSRequest(
  * Stream text-to-speech from ElevenLabs
  * Returns audio chunks as they become available
  */
-export async function* streamTTS(
-  config: ElevenLabsConfig,
-  text: string,
-): AsyncGenerator<Buffer> {
+export async function* streamTTS(config: ElevenLabsConfig, text: string): AsyncGenerator<Buffer> {
   const response = await makeTTSRequest(config, text);
 
   // Stream the response
@@ -231,10 +221,7 @@ export async function* streamTTS(
 /**
  * Get TTS audio as a single buffer
  */
-export async function synthesizeSpeech(
-  config: ElevenLabsConfig,
-  text: string,
-): Promise<Buffer> {
+export async function synthesizeSpeech(config: ElevenLabsConfig, text: string): Promise<Buffer> {
   const chunks: Buffer[] = [];
   for await (const chunk of streamTTS(config, text)) {
     chunks.push(chunk);

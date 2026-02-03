@@ -39,7 +39,7 @@ export function findContactCommand(program: Command, getContext: () => CliContex
           html = fs.readFileSync(options.html, 'utf-8');
           const msg = formatVerbose(`Loaded HTML from ${options.html}`, ctx);
           if (msg) console.log(msg);
-        } catch (error) {
+        } catch (_error) {
           console.log(formatError(`Failed to read HTML file: ${options.html}`, ctx));
           process.exit(1);
         }

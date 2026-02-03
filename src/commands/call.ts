@@ -13,8 +13,8 @@ import * as readline from 'node:readline';
 import type { Command } from 'commander';
 import { WebSocket } from 'ws';
 import type { CliContext } from '../cli/shared.js';
-import { loadConfig } from '../lib/config.js';
 import type { ClientMessage, ServerMessage } from '../lib/call/index.js';
+import { loadConfig } from '../lib/config.js';
 
 const NGROK_START_TIMEOUT_MS = 20000;
 const SERVER_START_TIMEOUT_MS = 25000;
@@ -119,9 +119,7 @@ async function waitForNgrokPublicUrl(processRef: ChildProcess, timeoutMs: number
         const payload = (await response.json()) as {
           tunnels?: Array<{ public_url?: string; proto?: string }>;
         };
-        const httpsTunnel = payload.tunnels?.find(
-          (tunnel) => tunnel.proto === 'https' && !!tunnel.public_url,
-        );
+        const httpsTunnel = payload.tunnels?.find((tunnel) => tunnel.proto === 'https' && !!tunnel.public_url);
         if (httpsTunnel?.public_url) {
           return httpsTunnel.public_url;
         }
@@ -189,12 +187,7 @@ interface CallOptions {
   autoInfra: boolean;
 }
 
-function runCallOverControlSocket(
-  phone: string,
-  options: CallOptions,
-  port: number,
-  ctx: CliContext,
-): Promise<void> {
+function runCallOverControlSocket(phone: string, options: CallOptions, port: number, ctx: CliContext): Promise<void> {
   const { colors } = ctx;
   const ws = new WebSocket(`ws://localhost:${port}/control`);
 

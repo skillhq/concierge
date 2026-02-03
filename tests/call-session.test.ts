@@ -3,12 +3,8 @@
  * Specifically tests that greeting is spoken AFTER TTS is initialized
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'node:events';
-
-// Track errors for assertions
-let greetingErrors: Error[] = [];
-let speakErrors: Error[] = [];
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the providers before importing CallSession
 vi.mock('../src/lib/call/providers/deepgram.js', () => {
@@ -95,9 +91,9 @@ vi.mock('../src/lib/call/audio/streaming-decoder.js', () => ({
 }));
 
 import { CallSession } from '../src/lib/call/call-session.js';
+import type { ServerMessage, TwilioMediaMessage } from '../src/lib/call/call-types.js';
 import { createPhoneCallSTT } from '../src/lib/call/providers/deepgram.js';
 import { createPhoneCallTTS } from '../src/lib/call/providers/elevenlabs.js';
-import type { ServerMessage, TwilioMediaMessage } from '../src/lib/call/call-types.js';
 
 // Create a mock WebSocket
 function createMockWebSocket() {
@@ -141,13 +137,11 @@ describe('CallSession', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    greetingErrors = [];
-    speakErrors = [];
     logMessages = [];
 
     // Intercept console.log to capture error messages
     console.log = (...args: any[]) => {
-      const message = args.map(a => String(a)).join(' ');
+      const message = args.map((a) => String(a)).join(' ');
       logMessages.push(message);
       originalLog(...args);
     };
@@ -185,7 +179,7 @@ describe('CallSession', () => {
         mockConfig,
         '+1987654321',
         'Book a hotel room',
-        'Customer: John Smith'
+        'Customer: John Smith',
       );
 
       const mockWs = createMockWebSocket();
@@ -194,7 +188,7 @@ describe('CallSession', () => {
       // Make STT connect take 800ms (longer than the 500ms greeting delay)
       const mockSTT = createPhoneCallSTT('test-key');
       (mockSTT.connect as ReturnType<typeof vi.fn>).mockImplementation(() => {
-        return new Promise(resolve => setTimeout(resolve, 800));
+        return new Promise((resolve) => setTimeout(resolve, 800));
       });
       (createPhoneCallSTT as ReturnType<typeof vi.fn>).mockReturnValue(mockSTT);
 
@@ -208,9 +202,8 @@ describe('CallSession', () => {
       await initPromise;
 
       // Check that no "Session not initialized" errors occurred
-      const sessionNotInitializedErrors = logMessages.filter(msg =>
-        msg.includes('speak() failed: not initialized') ||
-        msg.includes('Session not initialized')
+      const sessionNotInitializedErrors = logMessages.filter(
+        (msg) => msg.includes('speak() failed: not initialized') || msg.includes('Session not initialized'),
       );
 
       // With the bug, we'd see:
@@ -223,12 +216,7 @@ describe('CallSession', () => {
       // This ensures the P1 fix properly attaches handlers early
       // while still processing startMessage after TTS is ready
 
-      const session = new CallSession(
-        'test-call-id',
-        mockConfig,
-        '+1987654321',
-        'Book a hotel room'
-      );
+      const session = new CallSession('test-call-id', mockConfig, '+1987654321', 'Book a hotel room');
 
       const mockWs = createMockWebSocket();
       let handlersAttachedBeforeSTTConnect = false;
@@ -258,12 +246,7 @@ describe('CallSession', () => {
     });
 
     it('should ignore transcript echoes while TTS is still speaking', async () => {
-      const session = new CallSession(
-        'test-call-id',
-        mockConfig,
-        '+1987654321',
-        'Book a hotel room'
-      );
+      const session = new CallSession('test-call-id', mockConfig, '+1987654321', 'Book a hotel room');
 
       const mockWs = createMockWebSocket();
       const startMessage = createStartMessage();
@@ -288,18 +271,13 @@ describe('CallSession', () => {
       await vi.advanceTimersByTimeAsync(100);
 
       const echoedHuman = serverMessages.find(
-        (msg) => msg.type === 'transcript' && msg.role === 'human' && msg.text.includes('Jennifer')
+        (msg) => msg.type === 'transcript' && msg.role === 'human' && msg.text.includes('Jennifer'),
       );
       expect(echoedHuman).toBeUndefined();
     });
 
     it('should ignore transcript echoes briefly after TTS completes, then accept real speech', async () => {
-      const session = new CallSession(
-        'test-call-id',
-        mockConfig,
-        '+1987654321',
-        'Book a hotel room'
-      );
+      const session = new CallSession('test-call-id', mockConfig, '+1987654321', 'Book a hotel room');
 
       const mockWs = createMockWebSocket();
       const startMessage = createStartMessage();
@@ -316,7 +294,7 @@ describe('CallSession', () => {
       await vi.advanceTimersByTimeAsync(200);
 
       const immediateEcho = serverMessages.find(
-        (msg) => msg.type === 'transcript' && msg.role === 'human' && msg.text.includes('Hello')
+        (msg) => msg.type === 'transcript' && msg.role === 'human' && msg.text.includes('Hello'),
       );
       expect(immediateEcho).toBeUndefined();
 
@@ -325,7 +303,7 @@ describe('CallSession', () => {
       await vi.advanceTimersByTimeAsync(1200); // debounce + response cycle
 
       const acceptedHuman = serverMessages.find(
-        (msg) => msg.type === 'transcript' && msg.role === 'human' && msg.text.includes('I need a room')
+        (msg) => msg.type === 'transcript' && msg.role === 'human' && msg.text.includes('I need a room'),
       );
       expect(acceptedHuman).toBeDefined();
     });

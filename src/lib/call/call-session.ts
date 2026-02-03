@@ -15,10 +15,10 @@ import type {
   TranscriptEntry,
   TwilioMediaMessage,
 } from './call-types.js';
-import { DeepgramSTT, createPhoneCallSTT } from './providers/deepgram.js';
-import { ElevenLabsApiError, ElevenLabsTTS, createPhoneCallTTS } from './providers/elevenlabs.js';
-import { hangupCall } from './providers/twilio.js';
 import { ConversationAI } from './conversation-ai.js';
+import { createPhoneCallSTT, type DeepgramSTT } from './providers/deepgram.js';
+import { createPhoneCallTTS, ElevenLabsApiError, type ElevenLabsTTS } from './providers/elevenlabs.js';
+import { hangupCall } from './providers/twilio.js';
 
 export interface CallSessionEvents {
   message: (msg: ServerMessage) => void;
@@ -53,11 +53,8 @@ export class CallSession extends EventEmitter {
   private suppressSttUntilMs = 0; // Prevent echo from AI audio being transcribed as human speech
 
   // Event handler references for cleanup
-  // biome-ignore lint/suspicious/noExplicitAny: EventEmitter handlers have varying signatures
   private sttHandlers: { event: string; handler: (...args: any[]) => void }[] = [];
-  // biome-ignore lint/suspicious/noExplicitAny: EventEmitter handlers have varying signatures
   private ttsHandlers: { event: string; handler: (...args: any[]) => void }[] = [];
-  // biome-ignore lint/suspicious/noExplicitAny: EventEmitter handlers have varying signatures
   private mediaWsHandlers: { event: string; handler: (...args: any[]) => void }[] = [];
 
   /** Log with timestamp showing ms since session start */
@@ -367,7 +364,7 @@ export class CallSession extends EventEmitter {
 
       // Accumulate transcript segments
       if (this.pendingTranscript) {
-        this.pendingTranscript += ' ' + result.text;
+        this.pendingTranscript += ` ${result.text}`;
       } else {
         this.pendingTranscript = result.text;
       }
@@ -774,9 +771,7 @@ export class CallSession extends EventEmitter {
       return 'No conversation recorded.';
     }
 
-    const lines = this.state.transcript.map(
-      (t) => `${t.role === 'assistant' ? 'AI' : 'Human'}: ${t.text}`,
-    );
+    const lines = this.state.transcript.map((t) => `${t.role === 'assistant' ? 'AI' : 'Human'}: ${t.text}`);
 
     return lines.join('\n');
   }

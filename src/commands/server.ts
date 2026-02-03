@@ -2,13 +2,13 @@
  * Server command - Start/stop/status the call server
  */
 
-import type { Command } from 'commander';
-import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { join } from 'node:path';
+import type { Command } from 'commander';
 import type { CliContext } from '../cli/shared.js';
+import { type CallConfig, createCallServer, validateCallConfig } from '../lib/call/index.js';
 import { loadConfig } from '../lib/config.js';
-import { createCallServer, type CallConfig, validateCallConfig } from '../lib/call/index.js';
 
 const PID_FILE = join(homedir(), '.config', 'travel-concierge', 'server.pid');
 

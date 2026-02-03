@@ -2,8 +2,8 @@
  * Deepgram provider for real-time speech-to-text
  */
 
-import { createClient, LiveTranscriptionEvents, type LiveClient } from '@deepgram/sdk';
 import { EventEmitter } from 'node:events';
+import { createClient, type LiveClient, LiveTranscriptionEvents } from '@deepgram/sdk';
 
 export interface DeepgramConfig {
   apiKey: string;
@@ -134,9 +134,11 @@ export class DeepgramSTT extends EventEmitter {
       this.connection.on(LiveTranscriptionEvents.Transcript, (data) => {
         // Log raw Deepgram response for debugging
         const transcript = data.channel?.alternatives?.[0];
-        console.log(`[Deepgram] Transcript event - text: "${transcript?.transcript || ''}", confidence: ${transcript?.confidence || 0}, is_final: ${data.is_final}`);
+        console.log(
+          `[Deepgram] Transcript event - text: "${transcript?.transcript || ''}", confidence: ${transcript?.confidence || 0}, is_final: ${data.is_final}`,
+        );
 
-        if (transcript && transcript.transcript) {
+        if (transcript?.transcript) {
           const result: TranscriptResult = {
             text: transcript.transcript,
             isFinal: data.is_final ?? false,

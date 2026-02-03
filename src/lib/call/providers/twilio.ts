@@ -75,11 +75,7 @@ export async function preflightTwilioCallSetup(config: CallConfig): Promise<Twil
 /**
  * Initiate an outbound call via Twilio
  */
-export async function initiateCall(
-  config: CallConfig,
-  toNumber: string,
-  callId: string,
-): Promise<TwilioCallResult> {
+export async function initiateCall(config: CallConfig, toNumber: string, callId: string): Promise<TwilioCallResult> {
   const client = Twilio(config.twilioAccountSid, config.twilioAuthToken);
 
   // TwiML URL for the call - points to our webhook that returns Media Streams TwiML

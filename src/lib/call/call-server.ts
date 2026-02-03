@@ -2,17 +2,14 @@
  * Call server - HTTP + WebSocket server for voice calls
  */
 
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
-import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
+import { EventEmitter } from 'node:events';
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { WebSocket, WebSocketServer } from 'ws';
 import { CallSession } from './call-session.js';
-import type {
-  CallConfig,
-  CallState,
-  ClientMessage,
-  ServerMessage,
-} from './call-types.js';
+import type { CallConfig, CallState, ClientMessage, ServerMessage } from './call-types.js';
+import { preflightDeepgramSTT } from './providers/deepgram.js';
+import { preflightElevenLabsTTSBudget } from './providers/elevenlabs.js';
 import {
   formatPhoneNumber,
   generateErrorTwiml,
@@ -22,8 +19,6 @@ import {
   preflightTwilioCallSetup,
   validateWebhookSignature,
 } from './providers/twilio.js';
-import { preflightDeepgramSTT } from './providers/deepgram.js';
-import { preflightElevenLabsTTSBudget } from './providers/elevenlabs.js';
 
 // Maximum request body size (1MB)
 const MAX_BODY_SIZE = 1024 * 1024;
@@ -326,7 +321,15 @@ export class CallServer extends EventEmitter {
       const webhookUrl = `${this.options.publicUrl}${req.url}`;
       const params = parseWebhookBody(body);
 
-      if (signature && !validateWebhookSignature(this.options.config, signature, webhookUrl, params as unknown as Record<string, string>)) {
+      if (
+        signature &&
+        !validateWebhookSignature(
+          this.options.config,
+          signature,
+          webhookUrl,
+          params as unknown as Record<string, string>,
+        )
+      ) {
         this.warn('[Twilio] Invalid webhook signature');
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Invalid signature' }));
@@ -370,7 +373,15 @@ export class CallServer extends EventEmitter {
       const webhookUrl = `${this.options.publicUrl}${req.url}`;
       const params = parseWebhookBody(body);
 
-      if (signature && !validateWebhookSignature(this.options.config, signature, webhookUrl, params as unknown as Record<string, string>)) {
+      if (
+        signature &&
+        !validateWebhookSignature(
+          this.options.config,
+          signature,
+          webhookUrl,
+          params as unknown as Record<string, string>,
+        )
+      ) {
         this.warn('[Twilio] Invalid webhook signature');
         res.writeHead(403, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Invalid signature' }));
@@ -508,15 +519,18 @@ export class CallServer extends EventEmitter {
 
           sessionInitialized = true;
           this.log('[Media] Found session, initializing media stream...');
-          session.initializeMediaStream(ws, msg).then(() => {
-            this.log('[Media] Media stream initialized successfully');
-          }).catch((err) => {
-            this.error('[Media] Failed to initialize:', err);
-            // Clean up session on initialization failure
-            this.sessions.delete(callId);
-            this.emit('error', err instanceof Error ? err : new Error(String(err)));
-            ws.close(1011, 'Failed to initialize');
-          });
+          session
+            .initializeMediaStream(ws, msg)
+            .then(() => {
+              this.log('[Media] Media stream initialized successfully');
+            })
+            .catch((err) => {
+              this.error('[Media] Failed to initialize:', err);
+              // Clean up session on initialization failure
+              this.sessions.delete(callId);
+              this.emit('error', err instanceof Error ? err : new Error(String(err)));
+              ws.close(1011, 'Failed to initialize');
+            });
         }
       } catch (err) {
         this.error('[Media] Error parsing message:', err);
@@ -542,9 +556,7 @@ export class CallServer extends EventEmitter {
       preflightElevenLabsTTSBudget(this.options.config.elevenLabsApiKey, goal, context),
     ]);
 
-    const failedPreflight = [twilioPreflight, deepgramPreflight, elevenLabsPreflight].find(
-      (result) => !result.ok,
-    );
+    const failedPreflight = [twilioPreflight, deepgramPreflight, elevenLabsPreflight].find((result) => !result.ok);
     if (failedPreflight) {
       throw new Error(failedPreflight.message);
     }

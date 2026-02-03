@@ -3,7 +3,7 @@
  * Converts MP3 audio chunks to 8kHz µ-law in real-time
  */
 
-import { spawn, type ChildProcess } from 'node:child_process';
+import { type ChildProcess, spawn } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
 export interface StreamingDecoderEvents {
@@ -30,17 +30,26 @@ export class StreamingDecoder extends EventEmitter {
     }
 
     // Spawn ffmpeg to convert MP3 (stdin) to µ-law (stdout)
-    this.ffmpeg = spawn('ffmpeg', [
-      '-hide_banner',
-      '-loglevel', 'error',
-      '-i', 'pipe:0',           // Read MP3 from stdin
-      '-f', 'mulaw',            // Output format: µ-law
-      '-ar', '8000',            // 8kHz sample rate (Twilio)
-      '-ac', '1',               // Mono
-      'pipe:1',                 // Write to stdout
-    ], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    this.ffmpeg = spawn(
+      'ffmpeg',
+      [
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-i',
+        'pipe:0', // Read MP3 from stdin
+        '-f',
+        'mulaw', // Output format: µ-law
+        '-ar',
+        '8000', // 8kHz sample rate (Twilio)
+        '-ac',
+        '1', // Mono
+        'pipe:1', // Write to stdout
+      ],
+      {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
 
     // Handle µ-law output
     this.ffmpeg.stdout?.on('data', (chunk: Buffer) => {

@@ -35,16 +35,27 @@ export const HOTEL_SCRIPTS: ConversationScript[] = [
     id: 'hotel-direct-booking-success',
     name: 'Hotel Direct Booking - Successful Discount',
     goal: 'Book a room directly and negotiate a 10% discount off the Booking.com rate',
-    context: 'Hotel: Haus im Tal, Munich. Room: Downtown Cozy. Dates: March 12-14. Booking.com rate: $393 for 2 nights. Guest: John Smith.',
+    context:
+      'Hotel: Haus im Tal, Munich. Room: Downtown Cozy. Dates: March 12-14. Booking.com rate: $393 for 2 nights. Guest: John Smith.',
     expectedOutcome: 'success',
     turns: [
       { human: 'Hello, Haus im Tal, how can I help you?' },
       { human: 'Yes, we have availability for those dates. What rate did you see online?', pauseMs: 500 },
-      { human: 'I see. Well, we do try to match or beat online rates for direct bookings. Let me check what I can offer.', pauseMs: 1000 },
-      { human: 'I can offer you three hundred and fifty dollars for the two nights. Would that work for you?', pauseMs: 500 },
+      {
+        human:
+          'I see. Well, we do try to match or beat online rates for direct bookings. Let me check what I can offer.',
+        pauseMs: 1000,
+      },
+      {
+        human: 'I can offer you three hundred and fifty dollars for the two nights. Would that work for you?',
+        pauseMs: 500,
+      },
       { human: 'Great. I just need a name and email to confirm the booking.', pauseMs: 300 },
       { human: "Perfect, I've got John Smith. And the email?", pauseMs: 300 },
-      { human: "Alright, you're all set. Confirmation number is H-T-four-five-six-seven. See you on March twelfth.", pauseMs: 500 },
+      {
+        human: "Alright, you're all set. Confirmation number is H-T-four-five-six-seven. See you on March twelfth.",
+        pauseMs: 500,
+      },
     ],
   },
   {
@@ -55,8 +66,16 @@ export const HOTEL_SCRIPTS: ConversationScript[] = [
     expectedOutcome: 'partial',
     turns: [
       { human: 'Grand Plaza, this is Michael speaking.' },
-      { human: "I'm sorry, but those dates are during our peak season. We actually can't offer any discounts for New Year's Eve.", pauseMs: 500 },
-      { human: "No, I'm afraid the online rate is already our best rate for those dates. It's our busiest time of year.", pauseMs: 800 },
+      {
+        human:
+          "I'm sorry, but those dates are during our peak season. We actually can't offer any discounts for New Year's Eve.",
+        pauseMs: 500,
+      },
+      {
+        human:
+          "No, I'm afraid the online rate is already our best rate for those dates. It's our busiest time of year.",
+        pauseMs: 800,
+      },
       { human: 'I understand. Would you still like to proceed with the booking at the regular rate?', pauseMs: 500 },
     ],
   },
@@ -64,7 +83,8 @@ export const HOTEL_SCRIPTS: ConversationScript[] = [
     id: 'hotel-direct-booking-premium-link-flow',
     name: 'Hotel Direct Booking - Premium Link + Email Spelling',
     goal: 'Book directly, get a better direct rate, and provide email for a payment link',
-    context: 'Hotel: Haus im Tal, Munich. Room: Downtown Cozy. Dates: March 12-14. Booking.com rate: $393 for 2 nights. Guest: Derek Rein. Email: alexanderderekrein@gmail.com.',
+    context:
+      'Hotel: Haus im Tal, Munich. Room: Downtown Cozy. Dates: March 12-14. Booking.com rate: $393 for 2 nights. Guest: Derek Rein. Email: alexanderderekrein@gmail.com.',
     expectedOutcome: 'success',
     turns: [
       { human: 'Sure.' },
@@ -85,15 +105,16 @@ export const HOTEL_SCRIPTS: ConversationScript[] = [
     turns: [
       { human: 'Beach Resort, good afternoon.' },
       { human: "I'm sorry, but we're completely booked for those dates. There's a conference in town.", pauseMs: 500 },
-      { human: "The earliest availability I have is March twentieth. Would that work instead?", pauseMs: 800 },
-      { human: "I understand. Would you like me to put you on a waitlist in case of cancellations?", pauseMs: 500 },
+      { human: 'The earliest availability I have is March twentieth. Would that work instead?', pauseMs: 800 },
+      { human: 'I understand. Would you like me to put you on a waitlist in case of cancellations?', pauseMs: 500 },
     ],
   },
   {
     id: 'hotel-quick-agreement',
     name: 'Hotel Quick Agreement - Test Role Consistency',
     goal: 'Book a room directly and get a confirmation number',
-    context: 'Hotel: Haus im Tal, Munich. Room: Downtown Cozy. Dates: March 12-14. Customer: Derek Rein. Email: derek@example.com. Phone: 555-123-4567.',
+    context:
+      'Hotel: Haus im Tal, Munich. Room: Downtown Cozy. Dates: March 12-14. Customer: Derek Rein. Email: derek@example.com. Phone: 555-123-4567.',
     expectedOutcome: 'success',
     turns: [
       { human: 'Hello, Haus im Tal.' },
@@ -102,7 +123,10 @@ export const HOTEL_SCRIPTS: ConversationScript[] = [
       { human: 'Yeah. Sure.', pauseMs: 500 },
       { human: 'Yes.', pauseMs: 300 },
       { human: 'Yes.', pauseMs: 300 },
-      { human: 'The confirmation number is H-T-seven-eight-nine-zero. I have your email as derek at example dot com.', pauseMs: 500 },
+      {
+        human: 'The confirmation number is H-T-seven-eight-nine-zero. I have your email as derek at example dot com.',
+        pauseMs: 500,
+      },
     ],
     // This test specifically checks that the AI:
     // 1. Stays in the caller/customer role throughout
@@ -124,7 +148,10 @@ export const RESTAURANT_SCRIPTS: ConversationScript[] = [
     expectedOutcome: 'success',
     turns: [
       { human: 'Chez Marie, how may I help you?' },
-      { human: 'Saturday evening for four? Let me check... Yes, we have seven and eight thirty available.', pauseMs: 800 },
+      {
+        human: 'Saturday evening for four? Let me check... Yes, we have seven and eight thirty available.',
+        pauseMs: 800,
+      },
       { human: 'Seven oclock it is. And the name for the reservation?', pauseMs: 300 },
       { human: 'Sarah Johnson, party of four, Saturday at seven. Is there anything else?', pauseMs: 300 },
       { human: 'Perfect. We look forward to seeing you Saturday. Goodbye.', pauseMs: 300 },
@@ -134,12 +161,20 @@ export const RESTAURANT_SCRIPTS: ConversationScript[] = [
     id: 'restaurant-dietary-requirements',
     name: 'Restaurant with Dietary Requirements',
     goal: 'Make a reservation and confirm they can accommodate dietary restrictions',
-    context: 'Restaurant: Italian Bistro. Date: Friday 6:30pm. Party: 2. Requirements: One person is vegan, one has gluten allergy.',
+    context:
+      'Restaurant: Italian Bistro. Date: Friday 6:30pm. Party: 2. Requirements: One person is vegan, one has gluten allergy.',
     expectedOutcome: 'success',
     turns: [
       { human: 'Italian Bistro, good evening.' },
-      { human: 'Friday at six thirty for two? Yes, that should be fine. Did you have any special requests?', pauseMs: 500 },
-      { human: 'Absolutely, we have several vegan pasta options and all our dishes can be made gluten-free. I\'ll make a note on the reservation.', pauseMs: 800 },
+      {
+        human: 'Friday at six thirty for two? Yes, that should be fine. Did you have any special requests?',
+        pauseMs: 500,
+      },
+      {
+        human:
+          "Absolutely, we have several vegan pasta options and all our dishes can be made gluten-free. I'll make a note on the reservation.",
+        pauseMs: 800,
+      },
       { human: 'And what name should I put this under?', pauseMs: 300 },
       { human: 'All set. See you Friday at six thirty.', pauseMs: 300 },
     ],
@@ -157,14 +192,27 @@ export const HOLD_QUEUE_SCRIPTS: ConversationScript[] = [
     context: 'Hotel: Marriott Downtown. Customer: John Smith.',
     expectedOutcome: 'success',
     turns: [
-      { human: 'Thank you for calling Marriott Downtown. Your call is important to us. Please hold for the next available representative.', pauseMs: 500 },
+      {
+        human:
+          'Thank you for calling Marriott Downtown. Your call is important to us. Please hold for the next available representative.',
+        pauseMs: 500,
+      },
       { human: '...', pauseMs: 2000 }, // Hold music
       { human: 'Thank you for holding. Your estimated wait time is two minutes.', pauseMs: 500 },
       { human: '...', pauseMs: 3000 }, // More hold music
       { human: 'Thank you for your patience. This is Sarah, how may I assist you today?', pauseMs: 500 },
-      { human: 'Sure, let me check availability for March fifteenth through seventeenth. One moment please.', pauseMs: 1000 },
-      { human: 'Yes, we have a king room available for those dates at two hundred forty nine per night.', pauseMs: 500 },
-      { human: 'Perfect, I have that booked for John Smith. You will receive a confirmation email shortly.', pauseMs: 300 },
+      {
+        human: 'Sure, let me check availability for March fifteenth through seventeenth. One moment please.',
+        pauseMs: 1000,
+      },
+      {
+        human: 'Yes, we have a king room available for those dates at two hundred forty nine per night.',
+        pauseMs: 500,
+      },
+      {
+        human: 'Perfect, I have that booked for John Smith. You will receive a confirmation email shortly.',
+        pauseMs: 300,
+      },
     ],
   },
   {
@@ -188,7 +236,11 @@ export const HOLD_QUEUE_SCRIPTS: ConversationScript[] = [
     context: 'Hotel: Hilton Garden Inn. Customer: Bob Wilson.',
     expectedOutcome: 'success',
     turns: [
-      { human: 'Thank you for calling Hilton Garden Inn. For reservations, press 1. For an existing reservation, press 2. For the front desk, press 3. Or stay on the line to speak with an operator.', pauseMs: 500 },
+      {
+        human:
+          'Thank you for calling Hilton Garden Inn. For reservations, press 1. For an existing reservation, press 2. For the front desk, press 3. Or stay on the line to speak with an operator.',
+        pauseMs: 500,
+      },
       { human: '...', pauseMs: 1500 }, // Waiting
       { human: 'Connecting you to reservations. Please hold.', pauseMs: 500 },
       { human: '...', pauseMs: 2000 }, // Hold music
@@ -205,7 +257,11 @@ export const HOLD_QUEUE_SCRIPTS: ConversationScript[] = [
     context: 'Hotel: Best Western. Customer: Alice Brown.',
     expectedOutcome: 'success',
     turns: [
-      { human: 'Thank you for calling Best Western. All of our agents are currently busy. Your estimated wait time is fifteen minutes. Press 1 to receive a callback, or stay on the line.', pauseMs: 500 },
+      {
+        human:
+          'Thank you for calling Best Western. All of our agents are currently busy. Your estimated wait time is fifteen minutes. Press 1 to receive a callback, or stay on the line.',
+        pauseMs: 500,
+      },
       { human: '...', pauseMs: 3000 }, // Waiting on hold
       { human: 'Thank you for holding. You are next in queue.', pauseMs: 500 },
       { human: '...', pauseMs: 1500 },
@@ -223,7 +279,10 @@ export const HOLD_QUEUE_SCRIPTS: ConversationScript[] = [
     expectedOutcome: 'success',
     turns: [
       { human: 'Holiday Inn Express, front desk.', pauseMs: 300 },
-      { human: 'Oh, for rates you will need to speak with reservations. Let me transfer you. One moment.', pauseMs: 500 },
+      {
+        human: 'Oh, for rates you will need to speak with reservations. Let me transfer you. One moment.',
+        pauseMs: 500,
+      },
       { human: '...', pauseMs: 2000 }, // Transfer hold
       { human: 'Reservations, this is Linda.', pauseMs: 300 },
       { human: 'Our standard room is one twenty nine per night, and the suite is one seventy nine.', pauseMs: 500 },
@@ -246,8 +305,8 @@ export const EDGE_CASE_SCRIPTS: ConversationScript[] = [
       { human: 'Test Hotel, how can I help?' },
       { human: 'Sure, let me check on that. Can you hold for just a moment?', pauseMs: 500 },
       { human: '...', pauseMs: 3000 }, // Hold
-      { human: "Thanks for holding. Yes, we have rooms available. Would you like to book?", pauseMs: 500 },
-      { human: 'Great, you\'re all set.', pauseMs: 300 },
+      { human: 'Thanks for holding. Yes, we have rooms available. Would you like to book?', pauseMs: 500 },
+      { human: "Great, you're all set.", pauseMs: 300 },
     ],
   },
   {
@@ -257,8 +316,11 @@ export const EDGE_CASE_SCRIPTS: ConversationScript[] = [
     context: 'Business: Local Shop',
     expectedOutcome: 'success',
     turns: [
-      { human: 'Hello? Sorry, it\'s a bit loud here. Can you speak up?', pauseMs: 500 },
-      { human: 'Business hours? We\'re open nine to five Monday through Friday, and ten to three on Saturdays.', pauseMs: 800 },
+      { human: "Hello? Sorry, it's a bit loud here. Can you speak up?", pauseMs: 500 },
+      {
+        human: "Business hours? We're open nine to five Monday through Friday, and ten to three on Saturdays.",
+        pauseMs: 800,
+      },
       { human: 'Yes, nine to five weekdays. Anything else?', pauseMs: 300 },
     ],
   },
@@ -283,7 +345,11 @@ export const EDGE_CASE_SCRIPTS: ConversationScript[] = [
     expectedOutcome: 'success',
     turns: [
       { human: 'Car rentals, how can I—hold on one second—sorry about that, how can I help?', pauseMs: 500 },
-      { human: 'Daily rates start at forty-nine ninety-nine for a compact, or—wait, let me transfer you to—actually no, I can help. What type of car?', pauseMs: 800 },
+      {
+        human:
+          'Daily rates start at forty-nine ninety-nine for a compact, or—wait, let me transfer you to—actually no, I can help. What type of car?',
+        pauseMs: 800,
+      },
       { human: 'A midsize is seventy-nine per day. Need any other info?', pauseMs: 300 },
     ],
   },
@@ -315,7 +381,7 @@ export const ALL_SCRIPTS: ConversationScript[] = [
  * Get a script by ID
  */
 export function getScript(id: string): ConversationScript | undefined {
-  return ALL_SCRIPTS.find(s => s.id === id);
+  return ALL_SCRIPTS.find((s) => s.id === id);
 }
 
 /**
@@ -323,9 +389,13 @@ export function getScript(id: string): ConversationScript | undefined {
  */
 export function getScriptsByCategory(category: 'hotel' | 'restaurant' | 'hold' | 'edge'): ConversationScript[] {
   switch (category) {
-    case 'hotel': return HOTEL_SCRIPTS;
-    case 'restaurant': return RESTAURANT_SCRIPTS;
-    case 'hold': return HOLD_QUEUE_SCRIPTS;
-    case 'edge': return EDGE_CASE_SCRIPTS;
+    case 'hotel':
+      return HOTEL_SCRIPTS;
+    case 'restaurant':
+      return RESTAURANT_SCRIPTS;
+    case 'hold':
+      return HOLD_QUEUE_SCRIPTS;
+    case 'edge':
+      return EDGE_CASE_SCRIPTS;
   }
 }

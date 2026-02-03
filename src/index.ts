@@ -1,12 +1,13 @@
 // Library exports
-export { ConciergeClient } from './lib/concierge-client.js';
+
 export type { FindContactOptions } from './lib/concierge-client.js';
+export { ConciergeClient } from './lib/concierge-client.js';
 export type {
-  Platform,
-  PropertyInfo,
+  ConciergeConfig,
   ContactDossier,
   ContactInfo,
-  SourceInfo,
+  Platform,
+  PropertyInfo,
   Result,
-  ConciergeConfig,
+  SourceInfo,
 } from './lib/concierge-client-types.js';

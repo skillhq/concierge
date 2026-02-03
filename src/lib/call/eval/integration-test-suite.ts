@@ -8,12 +8,11 @@
  * 4. End-to-end pipeline tests - full flow without phone
  */
 
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-
+import { ConversationAI } from '../conversation-ai.js';
 import { testTTSPipeline } from './codec-test.js';
 import { runAllTurnTakingTests, type TurnTakingTestResult } from './turn-taking-test.js';
-import { ConversationAI } from '../conversation-ai.js';
 
 function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -123,7 +122,7 @@ async function runTurnTakingTests(): Promise<{
   failures: TurnTakingTestResult[];
 }> {
   const { passed, failed, results } = await runAllTurnTakingTests();
-  const failures = results.filter(r => !r.passed);
+  const failures = results.filter((r) => !r.passed);
 
   return {
     passed: failed === 0,
@@ -231,7 +230,7 @@ async function runAIDisclosureTest(config: IntegrationTestConfig): Promise<{
 
   // Check for AI disclosure keywords
   const disclosureKeywords = ['ai', 'artificial', 'assistant', 'automated', 'behalf'];
-  const containsDisclosure = disclosureKeywords.some(keyword => greetingLower.includes(keyword));
+  const containsDisclosure = disclosureKeywords.some((keyword) => greetingLower.includes(keyword));
 
   if (!containsDisclosure) {
     issues.push('Missing AI disclosure in greeting');
@@ -245,7 +244,7 @@ async function runAIDisclosureTest(config: IntegrationTestConfig): Promise<{
     'how may i assist',
     'what can i do for you',
   ];
-  const hasWrongRole = wrongRolePhrases.some(phrase => greetingLower.includes(phrase));
+  const hasWrongRole = wrongRolePhrases.some((phrase) => greetingLower.includes(phrase));
 
   if (hasWrongRole) {
     issues.push('AI incorrectly asked "how can I help" - AI is the caller seeking help!');
@@ -287,15 +286,15 @@ async function runRoleConsistencyTest(config: IntegrationTestConfig): Promise<{
     'does that look correct',
     'let me know if you need anything',
     'please let me know if you need',
-    'i\'ve noted',
+    "i've noted",
     'i have noted',
-    'i\'ll note that',
+    "i'll note that",
     'anything else i can help you with',
     'is there anything else i can do',
-    'i\'ve got that booked',
+    "i've got that booked",
     'i have that booked',
     'your reservation is confirmed', // AI shouldn't confirm - hotel does
-    'you\'re all set', // Hotel says this, not caller
+    "you're all set", // Hotel says this, not caller
   ];
 
   // Simulate a quick agreement conversation
@@ -440,7 +439,8 @@ async function runConcisenessTest(config: IntegrationTestConfig): Promise<{
   const ai = new ConversationAI({
     apiKey: config.anthropicApiKey,
     goal: 'Book a room directly, share email for payment link, and get confirmation details',
-    context: 'Hotel: Haus im Tal, Dates: March 12-14, Online rate: $393, Guest: Derek Rein, Email: alexanderderekrein@gmail.com',
+    context:
+      'Hotel: Haus im Tal, Dates: March 12-14, Online rate: $393, Guest: Derek Rein, Email: alexanderderekrein@gmail.com',
   });
 
   const issues: string[] = [];
@@ -471,9 +471,8 @@ async function runConcisenessTest(config: IntegrationTestConfig): Promise<{
   }
 
   const wordCounts = responses.map(countWords);
-  const avgWordsPerResponse = wordCounts.length > 0
-    ? wordCounts.reduce((sum, count) => sum + count, 0) / wordCounts.length
-    : 0;
+  const avgWordsPerResponse =
+    wordCounts.length > 0 ? wordCounts.reduce((sum, count) => sum + count, 0) / wordCounts.length : 0;
   const maxWordsPerResponse = wordCounts.length > 0 ? Math.max(...wordCounts) : 0;
 
   if (maxWordsPerResponse > 45) {
@@ -490,7 +489,8 @@ async function runConcisenessTest(config: IntegrationTestConfig): Promise<{
     issues.push(`Too much enthusiasm filler (${enthusiasmCount} matches). Keep acknowledgements brief.`);
   }
 
-  const redundantReconfirmPhrases = allTextLower.match(/just to confirm|final price|for march|confirmation number/g) || [];
+  const redundantReconfirmPhrases =
+    allTextLower.match(/just to confirm|final price|for march|confirmation number/g) || [];
   if (redundantReconfirmPhrases.length > 4) {
     issues.push(`Likely over-reconfirmation (${redundantReconfirmPhrases.length} repeated confirmation phrases).`);
   }
@@ -519,9 +519,7 @@ async function runConcisenessTest(config: IntegrationTestConfig): Promise<{
 /**
  * Run the complete integration test suite
  */
-export async function runIntegrationTestSuite(
-  config: IntegrationTestConfig,
-): Promise<TestSuiteResult> {
+export async function runIntegrationTestSuite(config: IntegrationTestConfig): Promise<TestSuiteResult> {
   const startTime = Date.now();
 
   console.log('╔════════════════════════════════════════════════════════════╗');
@@ -531,45 +529,62 @@ export async function runIntegrationTestSuite(
   // Run all test categories
   console.log('🔊 Running Codec Tests...');
   const codecResult = await runCodecTests(config);
-  console.log(`   ${codecResult.passed ? '✅' : '❌'} ${codecResult.tests - codecResult.failures.length}/${codecResult.tests} passed\n`);
+  console.log(
+    `   ${codecResult.passed ? '✅' : '❌'} ${codecResult.tests - codecResult.failures.length}/${codecResult.tests} passed\n`,
+  );
 
   console.log('🔄 Running Turn-Taking Tests...');
   const turnTakingResult = await runTurnTakingTests();
-  console.log(`   ${turnTakingResult.passed ? '✅' : '❌'} ${turnTakingResult.passedCount}/${turnTakingResult.total} passed\n`);
+  console.log(
+    `   ${turnTakingResult.passed ? '✅' : '❌'} ${turnTakingResult.passedCount}/${turnTakingResult.total} passed\n`,
+  );
 
   console.log('💬 Running Conversation Flow Tests...');
   const conversationResult = await runConversationFlowTests(config);
-  console.log(`   ${conversationResult.passed ? '✅' : '❌'} ${conversationResult.tests - conversationResult.failures.length}/${conversationResult.tests} passed\n`);
+  console.log(
+    `   ${conversationResult.passed ? '✅' : '❌'} ${conversationResult.tests - conversationResult.failures.length}/${conversationResult.tests} passed\n`,
+  );
 
   console.log('🤖 Running AI Disclosure & Role Test...');
   const disclosureResult = await runAIDisclosureTest(config);
-  console.log(`   ${disclosureResult.passed ? '✅' : '❌'} Disclosure: ${disclosureResult.containsDisclosure ? 'yes' : 'no'}, Wrong role: ${disclosureResult.hasWrongRole ? 'YES (bad)' : 'no (good)'}\n`);
+  console.log(
+    `   ${disclosureResult.passed ? '✅' : '❌'} Disclosure: ${disclosureResult.containsDisclosure ? 'yes' : 'no'}, Wrong role: ${disclosureResult.hasWrongRole ? 'YES (bad)' : 'no (good)'}\n`,
+  );
 
   console.log('🔄 Running Role Consistency Test...');
   const roleResult = await runRoleConsistencyTest(config);
-  console.log(`   ${roleResult.passed ? '✅' : '❌'} ${roleResult.issues.length === 0 ? 'AI stayed in customer role' : `Role reversals: ${roleResult.roleReversalPhrases.length}`}\n`);
+  console.log(
+    `   ${roleResult.passed ? '✅' : '❌'} ${roleResult.issues.length === 0 ? 'AI stayed in customer role' : `Role reversals: ${roleResult.roleReversalPhrases.length}`}\n`,
+  );
 
   console.log('🗣️  Running Voice Formatting Test...');
   const voiceResult = await runVoiceFormattingTest(config);
-  console.log(`   ${voiceResult.passed ? '✅' : '❌'} ${voiceResult.issues.length === 0 ? 'Dates/numbers properly spelled out' : voiceResult.issues.join(', ')}\n`);
+  console.log(
+    `   ${voiceResult.passed ? '✅' : '❌'} ${voiceResult.issues.length === 0 ? 'Dates/numbers properly spelled out' : voiceResult.issues.join(', ')}\n`,
+  );
 
   console.log('🔁 Running No Repetition Test...');
   const repetitionResult = await runNoRepetitionTest(config);
-  console.log(`   ${repetitionResult.passed ? '✅' : '❌'} ${repetitionResult.issues.length === 0 ? 'No excessive repetition' : repetitionResult.issues.join(', ')}\n`);
+  console.log(
+    `   ${repetitionResult.passed ? '✅' : '❌'} ${repetitionResult.issues.length === 0 ? 'No excessive repetition' : repetitionResult.issues.join(', ')}\n`,
+  );
 
   console.log('✂️  Running Conciseness Test...');
   const concisenessResult = await runConcisenessTest(config);
-  console.log(`   ${concisenessResult.passed ? '✅' : '❌'} avg words: ${concisenessResult.avgWordsPerResponse.toFixed(1)}, max: ${concisenessResult.maxWordsPerResponse}, filler words: ${concisenessResult.enthusiasmCount}\n`);
+  console.log(
+    `   ${concisenessResult.passed ? '✅' : '❌'} avg words: ${concisenessResult.avgWordsPerResponse.toFixed(1)}, max: ${concisenessResult.maxWordsPerResponse}, filler words: ${concisenessResult.enthusiasmCount}\n`,
+  );
 
   const duration = Date.now() - startTime;
-  const overallPassed = codecResult.passed &&
-                        turnTakingResult.passed &&
-                        conversationResult.passed &&
-                        disclosureResult.passed &&
-                        roleResult.passed &&
-                        voiceResult.passed &&
-                        repetitionResult.passed &&
-                        concisenessResult.passed;
+  const overallPassed =
+    codecResult.passed &&
+    turnTakingResult.passed &&
+    conversationResult.passed &&
+    disclosureResult.passed &&
+    roleResult.passed &&
+    voiceResult.passed &&
+    repetitionResult.passed &&
+    concisenessResult.passed;
 
   const result: TestSuiteResult = {
     timestamp: new Date().toISOString(),
@@ -594,13 +609,23 @@ export async function runIntegrationTestSuite(
   }
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log(`║  Codec:           ${codecResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`);
-  console.log(`║  Turn-Taking:     ${turnTakingResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`);
-  console.log(`║  Conversation:    ${conversationResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`);
-  console.log(`║  AI Disclosure:   ${disclosureResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`);
+  console.log(
+    `║  Turn-Taking:     ${turnTakingResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`,
+  );
+  console.log(
+    `║  Conversation:    ${conversationResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`,
+  );
+  console.log(
+    `║  AI Disclosure:   ${disclosureResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`,
+  );
   console.log(`║  Role Consistency:${roleResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`);
   console.log(`║  Voice Format:    ${voiceResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`);
-  console.log(`║  No Repetition:   ${repetitionResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`);
-  console.log(`║  Conciseness:     ${concisenessResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`);
+  console.log(
+    `║  No Repetition:   ${repetitionResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`,
+  );
+  console.log(
+    `║  Conciseness:     ${concisenessResult.passed ? '✅ PASS' : '❌ FAIL'}                                 ║`,
+  );
   console.log(`║  Duration:        ${(duration / 1000).toFixed(1)}s                                  ║`);
   console.log('╚════════════════════════════════════════════════════════════╝\n');
 
@@ -610,58 +635,78 @@ export async function runIntegrationTestSuite(
 
     if (!codecResult.passed) {
       console.log('Codec failures:');
-      codecResult.failures.forEach(f => console.log(`  - ${f}`));
+      for (const f of codecResult.failures) {
+        console.log(`  - ${f}`);
+      }
       console.log('');
     }
 
     if (!turnTakingResult.passed) {
       console.log('Turn-taking failures:');
-      turnTakingResult.failures.forEach(f => {
+      for (const f of turnTakingResult.failures) {
         console.log(`  - ${f.testName}: transcript="${f.transcript}" (expected "${f.expectedTranscript}")`);
-      });
+      }
       console.log('');
     }
 
     if (!conversationResult.passed) {
       console.log('Conversation flow failures:');
-      conversationResult.failures.forEach(f => console.log(`  - ${f}`));
+      for (const f of conversationResult.failures) {
+        console.log(`  - ${f}`);
+      }
       console.log('');
     }
 
     if (!disclosureResult.passed) {
       console.log('AI disclosure/role failures:');
-      disclosureResult.issues.forEach(f => console.log(`  - ${f}`));
+      for (const f of disclosureResult.issues) {
+        console.log(`  - ${f}`);
+      }
       console.log(`  Greeting was: "${disclosureResult.greeting}"`);
       console.log('');
     }
 
     if (!roleResult.passed) {
       console.log('Role consistency failures (AI switched to hotel employee role):');
-      roleResult.roleReversalPhrases.forEach(f => console.log(`  - ${f}`));
+      for (const f of roleResult.roleReversalPhrases) {
+        console.log(`  - ${f}`);
+      }
       console.log('  Responses:');
-      roleResult.responses.forEach((r, i) => console.log(`    ${i + 1}. "${r.substring(0, 100)}..."`));
+      for (let i = 0; i < roleResult.responses.length; i++) {
+        console.log(`    ${i + 1}. "${roleResult.responses[i].substring(0, 100)}..."`);
+      }
       console.log('');
     }
 
     if (!voiceResult.passed) {
       console.log('Voice formatting failures:');
-      voiceResult.issues.forEach(f => console.log(`  - ${f}`));
+      for (const f of voiceResult.issues) {
+        console.log(`  - ${f}`);
+      }
       console.log('  Responses:');
-      voiceResult.responses.forEach((r, i) => console.log(`    ${i + 1}. "${r.substring(0, 80)}..."`));
+      for (let i = 0; i < voiceResult.responses.length; i++) {
+        console.log(`    ${i + 1}. "${voiceResult.responses[i].substring(0, 80)}..."`);
+      }
       console.log('');
     }
 
     if (!repetitionResult.passed) {
       console.log('Repetition failures:');
-      repetitionResult.issues.forEach(f => console.log(`  - ${f}`));
+      for (const f of repetitionResult.issues) {
+        console.log(`  - ${f}`);
+      }
       console.log('');
     }
 
     if (!concisenessResult.passed) {
       console.log('Conciseness failures:');
-      concisenessResult.issues.forEach(f => console.log(`  - ${f}`));
+      for (const f of concisenessResult.issues) {
+        console.log(`  - ${f}`);
+      }
       console.log('  Responses:');
-      concisenessResult.responses.forEach((r, i) => console.log(`    ${i + 1}. "${r.substring(0, 100)}..."`));
+      for (let i = 0; i < concisenessResult.responses.length; i++) {
+        console.log(`    ${i + 1}. "${concisenessResult.responses[i].substring(0, 100)}..."`);
+      }
       console.log('');
     }
   }

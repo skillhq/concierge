@@ -10,12 +10,12 @@
  */
 
 import { execSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createClient, LiveTranscriptionEvents } from '@deepgram/sdk';
-import type { ConversationScript } from './conversation-scripts.js';
 import { ConversationAI } from '../conversation-ai.js';
+import type { ConversationScript } from './conversation-scripts.js';
 
 export interface EvalConfig {
   anthropicApiKey: string;
@@ -80,12 +80,16 @@ async function generateSpeechAudio(text: string): Promise<{ pcm: Buffer; duratio
     execSync(`ffmpeg -y -i "${tempAiff}" -f s16le -ar 8000 -ac 1 "${tempPcm}" 2>/dev/null`, { stdio: 'pipe' });
 
     const pcm = readFileSync(tempPcm);
-    const durationMs = (pcm.length / 2) / 8; // 16-bit = 2 bytes per sample, 8kHz
+    const durationMs = pcm.length / 2 / 8; // 16-bit = 2 bytes per sample, 8kHz
 
     return { pcm, durationMs };
   } finally {
-    try { unlinkSync(tempAiff); } catch {}
-    try { unlinkSync(tempPcm); } catch {}
+    try {
+      unlinkSync(tempAiff);
+    } catch {}
+    try {
+      unlinkSync(tempPcm);
+    } catch {}
   }
 }
 
@@ -146,7 +150,7 @@ async function transcribeAudio(
         if (!firstTranscriptTime) {
           firstTranscriptTime = Date.now();
         }
-        transcript += text + ' ';
+        transcript += `${text} `;
         confidence = Math.max(confidence, conf);
       }
     });
@@ -199,22 +203,19 @@ async function synthesizeSpeech(
   const startTime = Date.now();
   let firstByteTime: number | null = null;
 
-  const response = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'xi-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_turbo_v2',
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-        output_format: 'ulaw_8000',
-      }),
+  const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'xi-api-key': apiKey,
     },
-  );
+    body: JSON.stringify({
+      text,
+      model_id: 'eleven_turbo_v2',
+      voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+      output_format: 'ulaw_8000',
+    }),
+  });
 
   if (!response.ok) {
     throw new Error(`ElevenLabs error: ${response.status}`);
@@ -253,18 +254,19 @@ function playMulawAudio(audio: Buffer): void {
     execSync(`ffmpeg -y -f mulaw -ar 8000 -ac 1 -i "${tempUlaw}" "${tempWav}" 2>/dev/null`, { stdio: 'pipe' });
     execSync(`afplay "${tempWav}"`, { stdio: 'pipe' });
   } finally {
-    try { unlinkSync(tempUlaw); } catch {}
-    try { unlinkSync(tempWav); } catch {}
+    try {
+      unlinkSync(tempUlaw);
+    } catch {}
+    try {
+      unlinkSync(tempWav);
+    } catch {}
   }
 }
 
 /**
  * Run evaluation on a single script
  */
-export async function runEval(
-  script: ConversationScript,
-  config: EvalConfig,
-): Promise<EvalResult> {
+export async function runEval(script: ConversationScript, config: EvalConfig): Promise<EvalResult> {
   const result: EvalResult = {
     scriptId: script.id,
     scriptName: script.name,
@@ -331,21 +333,27 @@ export async function runEval(
         writeFileSync(tempPcm, humanAudio.pcm);
         execSync(`ffmpeg -y -f s16le -ar 8000 -ac 1 -i "${tempPcm}" "${tempWav}" 2>/dev/null`);
         execSync(`afplay "${tempWav}"`);
-        try { unlinkSync(tempPcm); } catch {}
-        try { unlinkSync(tempWav); } catch {}
+        try {
+          unlinkSync(tempPcm);
+        } catch {}
+        try {
+          unlinkSync(tempWav);
+        } catch {}
       }
 
       // Transcribe with Deepgram
       console.log('[STT] Transcribing...');
       const sttResult = await transcribeAudio(humanAudio.pcm, config.deepgramApiKey);
-      console.log(`[STT] (${sttResult.latencyMs}ms, conf: ${sttResult.confidence.toFixed(2)}): "${sttResult.transcript}"`);
+      console.log(
+        `[STT] (${sttResult.latencyMs}ms, conf: ${sttResult.confidence.toFixed(2)}): "${sttResult.transcript}"`,
+      );
 
       // Handle empty transcripts (e.g., "..." for hold)
       if (!sttResult.transcript && turn.human === '...') {
         console.log('[STT] Empty transcript (simulated hold/silence)');
         // Wait and continue
         if (turn.pauseMs) {
-          await new Promise(r => setTimeout(r, turn.pauseMs));
+          await new Promise((r) => setTimeout(r, turn.pauseMs));
         }
         continue;
       }
@@ -363,12 +371,10 @@ export async function runEval(
 
       // Synthesize TTS
       console.log('[TTS] Synthesizing...');
-      const ttsResult = await synthesizeSpeech(
-        aiResult.response,
-        config.elevenLabsApiKey,
-        config.elevenLabsVoiceId,
+      const ttsResult = await synthesizeSpeech(aiResult.response, config.elevenLabsApiKey, config.elevenLabsVoiceId);
+      console.log(
+        `[TTS] (${ttsResult.latencyMs}ms, first byte: ${ttsResult.firstByteMs}ms, audio: ${ttsResult.durationMs.toFixed(0)}ms)`,
       );
-      console.log(`[TTS] (${ttsResult.latencyMs}ms, first byte: ${ttsResult.firstByteMs}ms, audio: ${ttsResult.durationMs.toFixed(0)}ms)`);
 
       // Optionally play TTS audio
       if (config.playAudio) {
@@ -397,7 +403,7 @@ export async function runEval(
 
       // Optional pause between turns
       if (turn.pauseMs && config.playAudio) {
-        await new Promise(r => setTimeout(r, turn.pauseMs));
+        await new Promise((r) => setTimeout(r, turn.pauseMs));
       }
 
       // Stop if conversation is complete
@@ -411,11 +417,11 @@ export async function runEval(
       result.summary.avgSttLatencyMs = result.turns.reduce((sum, t) => sum + t.sttLatencyMs, 0) / result.turns.length;
       result.summary.avgAiLatencyMs = result.turns.reduce((sum, t) => sum + t.aiLatencyMs, 0) / result.turns.length;
       result.summary.avgTtsLatencyMs = result.turns.reduce((sum, t) => sum + t.ttsLatencyMs, 0) / result.turns.length;
-      result.summary.avgTotalLatencyMs = result.turns.reduce((sum, t) => sum + t.totalTurnLatencyMs, 0) / result.turns.length;
+      result.summary.avgTotalLatencyMs =
+        result.turns.reduce((sum, t) => sum + t.totalTurnLatencyMs, 0) / result.turns.length;
     }
 
     result.success = true;
-
   } catch (error) {
     result.error = error instanceof Error ? error.message : String(error);
     console.error(`\n[ERROR] ${result.error}`);
@@ -447,10 +453,7 @@ export async function runEval(
 /**
  * Run evaluation on multiple scripts
  */
-export async function runEvalSuite(
-  scripts: ConversationScript[],
-  config: EvalConfig,
-): Promise<EvalResult[]> {
+export async function runEvalSuite(scripts: ConversationScript[], config: EvalConfig): Promise<EvalResult[]> {
   const results: EvalResult[] = [];
 
   console.log(`\n${'#'.repeat(60)}`);
@@ -463,7 +466,7 @@ export async function runEvalSuite(
   }
 
   // Print suite summary
-  const successful = results.filter(r => r.success).length;
+  const successful = results.filter((r) => r.success).length;
   const avgLatency = results.reduce((sum, r) => sum + r.summary.avgTotalLatencyMs, 0) / results.length;
 
   console.log(`\n${'#'.repeat(60)}`);

@@ -45,10 +45,6 @@ export class TurnTakingSimulator extends EventEmitter {
   private responseTriggeredAt: number | null = null;
   private startTime: number = 0;
 
-  constructor() {
-    super();
-  }
-
   /**
    * Simulate receiving a transcript event
    */
@@ -63,7 +59,7 @@ export class TurnTakingSimulator extends EventEmitter {
 
       // Accumulate transcript
       if (this.pendingTranscript) {
-        this.pendingTranscript += ' ' + text;
+        this.pendingTranscript += ` ${text}`;
       } else {
         this.pendingTranscript = text;
       }
@@ -151,9 +147,7 @@ export const TURN_TAKING_TEST_CASES: TurnTakingTestCase[] = [
     id: 'simple-sentence',
     name: 'Simple sentence',
     description: 'Single final transcript should trigger response after debounce',
-    events: [
-      { text: 'Hello, how are you?', isFinal: true, delayMs: 0 },
-    ],
+    events: [{ text: 'Hello, how are you?', isFinal: true, delayMs: 0 }],
     expectedTranscript: 'Hello, how are you?',
     expectedMinDelayMs: RESPONSE_DEBOUNCE_MS - 50,
     expectedMaxDelayMs: RESPONSE_DEBOUNCE_MS + 100,
@@ -282,15 +276,12 @@ export interface TurnTakingTestResult {
 /**
  * Run a single turn-taking test
  */
-export async function runTurnTakingTest(
-  testCase: TurnTakingTestCase,
-): Promise<TurnTakingTestResult> {
+export async function runTurnTakingTest(testCase: TurnTakingTestCase): Promise<TurnTakingTestResult> {
   const simulator = new TurnTakingSimulator();
   const result = await simulator.runSequence(testCase.events);
 
   const transcriptMatch = result.transcript === testCase.expectedTranscript;
-  const delayInRange = result.delayMs >= testCase.expectedMinDelayMs &&
-                       result.delayMs <= testCase.expectedMaxDelayMs;
+  const delayInRange = result.delayMs >= testCase.expectedMinDelayMs && result.delayMs <= testCase.expectedMaxDelayMs;
   const respondedCorrectly = result.responded === testCase.shouldRespond;
 
   return {

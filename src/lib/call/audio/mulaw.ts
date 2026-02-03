@@ -20,9 +20,9 @@ function initTables(): void {
     const mulaw = ~i & 0xff;
 
     // Step 2: Extract components from inverted byte
-    const sign = mulaw & 0x80;      // Bit 7 = sign
-    const exponent = (mulaw >> 4) & 0x07;  // Bits 4-6 = exponent
-    const mantissa = mulaw & 0x0f;  // Bits 0-3 = mantissa
+    const sign = mulaw & 0x80; // Bit 7 = sign
+    const exponent = (mulaw >> 4) & 0x07; // Bits 4-6 = exponent
+    const mantissa = mulaw & 0x0f; // Bits 0-3 = mantissa
 
     // Step 3: Decode to linear
     // Formula: ((mantissa << 4) + bias) << (exponent + 1) - bias
