@@ -550,7 +550,7 @@ export class CallSession extends EventEmitter {
       // Start TTS
       await this.tts.speak(text, currentGeneration);
       if (decoderChunks === 0) {
-        throw new Error('TTS produced no audio output');
+        throw new Error('TTS produced no audio output (decoder emitted 0 chunks)');
       }
     } catch (err) {
       // Ensure we don't leave a stalled decoder when synthesis fails.

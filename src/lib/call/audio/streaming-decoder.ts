@@ -36,10 +36,6 @@ export class StreamingDecoder extends EventEmitter {
         '-hide_banner',
         '-loglevel',
         'error',
-        '-fflags',
-        '+discardcorrupt',
-        '-f',
-        'mp3',
         '-i',
         'pipe:0', // Read MP3 from stdin
         '-f',
