@@ -13,6 +13,35 @@ skill install @skillhq/travel-concierge
 - **Contact Extraction**: Find phone, email, WhatsApp, and social media contacts from Airbnb, Booking.com, VRBO, and Expedia listings
 - **AI Phone Calls**: Place autonomous phone calls with a goal-driven AI agent that handles the conversation until the goal is achieved
 
+## System Dependencies (AI Calls)
+
+AI calls require local binaries in addition to API keys:
+
+- `ffmpeg` (must include MP3 decode support)
+- `ngrok` (used when `call` auto-starts infrastructure)
+
+Install examples:
+
+```bash
+# macOS
+brew install ffmpeg ngrok
+
+# Ubuntu/Debian (including ARM VPS)
+sudo apt-get update
+sudo apt-get install -y ffmpeg
+# install ngrok from ngrok docs, then verify `ngrok version`
+```
+
+Verify locally:
+
+```bash
+ffmpeg -version
+ffmpeg -decoders | rg -i mp3
+ngrok version
+```
+
+The call preflight now fails fast with a clear error if these dependencies are missing or if ffmpeg cannot decode MP3.
+
 ## Quick Start
 
 ### Find contacts for a listing
@@ -55,7 +84,7 @@ travel-concierge config set anthropicApiKey "<key>"
 
 ## Documentation
 
-See [SKILL.md](./SKILL.md) for full documentation.
+See [SKILL.md](./SKILL.md) and [CALL-SETUP.md](./CALL-SETUP.md) for full setup and troubleshooting.
 
 ## License
 

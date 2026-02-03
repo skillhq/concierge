@@ -81,6 +81,7 @@ travel-concierge server stop
 ## Preflight checks
 
 Before dialing, the system validates:
+- Local runtime dependencies (`ffmpeg` binary + MP3 decode support, plus `ngrok` if auto-infra is used)
 - Twilio credentials/account status/from-number availability
 - Deepgram API key/auth reachability
 - ElevenLabs character quota sufficiency (estimated call budget)

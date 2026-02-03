@@ -116,5 +116,6 @@ travel-concierge config show
 ## Notes
 
 - Contact extraction uses publicly available information.
+- `call` validates local dependencies before dialing (`ffmpeg` with MP3 decode support, and `ngrok` when auto-infra is needed).
 - `call` runs preflight checks for Twilio, Deepgram, and ElevenLabs quota before dialing.
 - When auto infra is used, server/ngrok logs are written under `~/.config/travel-concierge/call-runs/<run-id>/`.

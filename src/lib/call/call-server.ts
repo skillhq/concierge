@@ -10,6 +10,7 @@ import { CallSession } from './call-session.js';
 import type { CallConfig, CallState, ClientMessage, ServerMessage } from './call-types.js';
 import { preflightDeepgramSTT } from './providers/deepgram.js';
 import { preflightElevenLabsTTSBudget } from './providers/elevenlabs.js';
+import { preflightFfmpeg } from './providers/local-deps.js';
 import {
   formatPhoneNumber,
   generateErrorTwiml,
@@ -550,17 +551,21 @@ export class CallServer extends EventEmitter {
    * Internal method to initiate a call
    */
   private async initiateCallInternal(phoneNumber: string, goal: string, context?: string): Promise<string> {
-    const [twilioPreflight, deepgramPreflight, elevenLabsPreflight] = await Promise.all([
+    const [ffmpegPreflight, twilioPreflight, deepgramPreflight, elevenLabsPreflight] = await Promise.all([
+      preflightFfmpeg(),
       preflightTwilioCallSetup(this.options.config),
       preflightDeepgramSTT(this.options.config.deepgramApiKey),
       preflightElevenLabsTTSBudget(this.options.config.elevenLabsApiKey, goal, context),
     ]);
 
-    const failedPreflight = [twilioPreflight, deepgramPreflight, elevenLabsPreflight].find((result) => !result.ok);
+    const failedPreflight = [ffmpegPreflight, twilioPreflight, deepgramPreflight, elevenLabsPreflight].find(
+      (result) => !result.ok,
+    );
     if (failedPreflight) {
       throw new Error(failedPreflight.message);
     }
 
+    this.log(`[Preflight] ${ffmpegPreflight.message}`);
     this.log(`[Preflight] ${twilioPreflight.message}`);
     this.log(`[Preflight] ${deepgramPreflight.message}`);
     this.log(`[Preflight] ${elevenLabsPreflight.message}`);

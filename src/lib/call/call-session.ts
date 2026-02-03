@@ -201,7 +201,10 @@ export class CallSession extends EventEmitter {
     let ttsBytes = 0;
 
     // Store event handlers for cleanup
-    const ttsAudioHandler = (chunk: Buffer) => {
+    const ttsAudioHandler = (chunk: Buffer, requestId?: number) => {
+      if (requestId !== undefined && requestId !== this.decoderGeneration) {
+        return;
+      }
       ttsChunks++;
       ttsBytes += chunk.length;
       if (ttsChunks === 1) {
@@ -214,13 +217,21 @@ export class CallSession extends EventEmitter {
       }
     };
 
-    const ttsDoneHandler = () => {
+    const ttsDoneHandler = (requestId?: number) => {
+      if (requestId !== undefined && requestId !== this.decoderGeneration) {
+        return;
+      }
       this.log(`[TTS] Stream complete: ${ttsChunks} chunks, ${ttsBytes} bytes total, flushing decoder`);
       // Signal end of input to ffmpeg - it will flush remaining audio
       this.decoder?.end();
     };
 
-    const ttsErrorHandler = (err: Error) => this.log(`[TTS] Error: ${this.formatError(err)}`);
+    const ttsErrorHandler = (err: Error, requestId?: number) => {
+      if (requestId !== undefined && requestId !== this.decoderGeneration) {
+        return;
+      }
+      this.log(`[TTS] Error: ${this.formatError(err)}`);
+    };
 
     this.tts.on('audio', ttsAudioHandler);
     this.tts.on('done', ttsDoneHandler);
@@ -537,7 +548,7 @@ export class CallSession extends EventEmitter {
 
     try {
       // Start TTS
-      await this.tts.speak(text);
+      await this.tts.speak(text, currentGeneration);
       if (decoderChunks === 0) {
         throw new Error('TTS produced no audio output');
       }

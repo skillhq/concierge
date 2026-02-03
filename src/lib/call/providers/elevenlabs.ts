@@ -245,7 +245,7 @@ export class ElevenLabsTTS extends EventEmitter {
    * Synthesize text to speech and emit audio chunks
    * Emits 'audio' events with MP3 data (converted to µ-law via ffmpeg in call-session)
    */
-  async speak(text: string): Promise<void> {
+  async speak(text: string, requestId?: number): Promise<void> {
     this.abortController = new AbortController();
 
     try {
@@ -256,17 +256,17 @@ export class ElevenLabsTTS extends EventEmitter {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          this.emit('audio', Buffer.from(value));
+          this.emit('audio', Buffer.from(value), requestId);
         }
-        this.emit('done');
+        this.emit('done', requestId);
       } finally {
         reader.releaseLock();
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        this.emit('cancelled');
+        this.emit('cancelled', requestId);
       } else {
-        this.emit('error', error);
+        this.emit('error', error, requestId);
         throw error;
       }
     } finally {

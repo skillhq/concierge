@@ -14,6 +14,7 @@ import type { Command } from 'commander';
 import { WebSocket } from 'ws';
 import type { CliContext } from '../cli/shared.js';
 import type { ClientMessage, ServerMessage } from '../lib/call/index.js';
+import { preflightNgrok } from '../lib/call/providers/local-deps.js';
 import { loadConfig } from '../lib/config.js';
 
 const NGROK_START_TIMEOUT_MS = 20000;
@@ -394,6 +395,12 @@ export function callCommand(program: Command, getContext: () => CliContext): voi
             console.log(colors.muted('  travel-concierge server start --public-url <ngrok-url>'));
             process.exit(1);
           }
+
+          const ngrokPreflight = await preflightNgrok();
+          if (!ngrokPreflight.ok) {
+            throw new Error(ngrokPreflight.message);
+          }
+          console.log(colors.info(`[Preflight] ${ngrokPreflight.message}`));
 
           console.log(colors.info('Starting managed infrastructure (ngrok + server)...'));
           runtime = await startManagedInfra(port, config.ngrokAuthToken);
