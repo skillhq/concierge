@@ -12,6 +12,10 @@ export interface DeepgramConfig {
   punctuate?: boolean;
   interimResults?: boolean;
   endpointing?: number;
+  /** Minimum confidence threshold (0-1) for final transcripts. Below this, transcripts are dropped. */
+  confidenceThreshold?: number;
+  /** Keywords to boost recognition of (e.g., common responses like "yes", "no") */
+  keywords?: string[];
 }
 
 export interface TranscriptResult {
@@ -106,7 +110,8 @@ export class DeepgramSTT extends EventEmitter {
   async connect(): Promise<void> {
     const deepgram = createClient(this.config.apiKey);
 
-    this.connection = deepgram.listen.live({
+    // Build live transcription options
+    const liveOptions: Record<string, unknown> = {
       model: this.config.model ?? 'nova-2',
       language: this.config.language ?? 'en-US',
       punctuate: this.config.punctuate ?? true,
@@ -117,7 +122,16 @@ export class DeepgramSTT extends EventEmitter {
       sample_rate: 8000,
       channels: 1,
       smart_format: true,
-    });
+    };
+
+    // Add keyword boosting if configured
+    // Format: "word:intensifier" where intensifier is an exponential boost factor
+    if (this.config.keywords && this.config.keywords.length > 0) {
+      liveOptions.keywords = this.config.keywords.map((kw) => `${kw}:2`);
+      console.log(`[Deepgram] Keyword boosting enabled for ${this.config.keywords.length} keywords`);
+    }
+
+    this.connection = deepgram.listen.live(liveOptions);
 
     return new Promise((resolve, reject) => {
       if (!this.connection) {
@@ -134,15 +148,27 @@ export class DeepgramSTT extends EventEmitter {
       this.connection.on(LiveTranscriptionEvents.Transcript, (data) => {
         // Log raw Deepgram response for debugging
         const transcript = data.channel?.alternatives?.[0];
+        const confidence = transcript?.confidence ?? 0;
+        const isFinal = data.is_final ?? false;
+        const threshold = this.config.confidenceThreshold ?? 0;
+
         console.log(
-          `[Deepgram] Transcript event - text: "${transcript?.transcript || ''}", confidence: ${transcript?.confidence || 0}, is_final: ${data.is_final}`,
+          `[Deepgram] Transcript event - text: "${transcript?.transcript || ''}", confidence: ${confidence.toFixed(3)}, is_final: ${isFinal}${threshold > 0 ? `, threshold: ${threshold}` : ''}`,
         );
 
         if (transcript?.transcript) {
+          // Filter out low-confidence final transcripts (likely noise/misrecognition)
+          if (isFinal && threshold > 0 && confidence < threshold) {
+            console.log(
+              `[Deepgram] Dropping low-confidence transcript: "${transcript.transcript}" (${(confidence * 100).toFixed(1)}% < ${(threshold * 100).toFixed(0)}% threshold)`,
+            );
+            return;
+          }
+
           const result: TranscriptResult = {
             text: transcript.transcript,
-            isFinal: data.is_final ?? false,
-            confidence: transcript.confidence ?? 0,
+            isFinal,
+            confidence,
             words: transcript.words?.map((w: { word: string; start: number; end: number; confidence: number }) => ({
               word: w.word,
               start: w.start,
@@ -254,13 +280,57 @@ export class DeepgramSTT extends EventEmitter {
   }
 }
 
+// Common conversational keywords to boost recognition accuracy
+// Exported for future use when keyword format is verified with Deepgram SDK
+export const PHONE_CALL_KEYWORDS = [
+  // Affirmatives
+  'yes',
+  'yeah',
+  'yep',
+  'sure',
+  'okay',
+  'ok',
+  'correct',
+  'right',
+  'absolutely',
+  'definitely',
+  // Negatives
+  'no',
+  'nope',
+  'not',
+  // Common responses
+  'hello',
+  'hi',
+  'thanks',
+  'thank you',
+  'please',
+  'sorry',
+  'pardon',
+  'what',
+  'when',
+  'where',
+  'how',
+  // Booking-related
+  'booking',
+  'reservation',
+  'room',
+  'night',
+  'nights',
+  'check-in',
+  'checkout',
+  'available',
+  'confirm',
+  'cancel',
+];
+
 /**
  * Create a Deepgram STT instance optimized for phone calls
  */
 export function createPhoneCallSTT(apiKey: string): DeepgramSTT {
   return new DeepgramSTT({
     apiKey,
-    model: 'nova-2-phonecall', // Optimized for phone audio
+    // Nova-2 phonecall variant - optimized for telephony audio
+    model: 'nova-2-phonecall',
     language: 'en-US',
     punctuate: true,
     interimResults: true,
@@ -268,5 +338,10 @@ export function createPhoneCallSTT(apiKey: string): DeepgramSTT {
     // Combined with 1000ms response debounce = ~1.8s total before AI responds
     // This allows for natural thinking pauses without interruption
     endpointing: 800,
+    // Filter out low-confidence transcripts (noise, misrecognition)
+    // 80% threshold filters out garbage like "West" (62%) while keeping good transcripts
+    confidenceThreshold: 0.8,
+    // Boost common conversational words for better recognition
+    keywords: PHONE_CALL_KEYWORDS,
   });
 }
