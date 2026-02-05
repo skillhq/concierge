@@ -415,8 +415,9 @@ Phone: ${options.customerPhone}${options.context ? `\n${options.context}` : ''}`
             console.log('');
             console.log(colors.muted(`Transcript saved: ${transcriptPath}`));
 
-            // Fetch and save recording if we have a callSid
-            if (msg.callSid) {
+            // Fetch and save recording if call was answered (skip for busy/no-answer/failed/canceled)
+            const recordableStatuses = new Set(['completed', 'in-progress']);
+            if (msg.callSid && recordableStatuses.has(msg.status)) {
               fetchAndSaveRecording(port, msg.callSid, logDir, colors)
                 .then(() => safeResolve())
                 .catch(() => safeResolve());
