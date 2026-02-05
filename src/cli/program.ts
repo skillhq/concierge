@@ -4,6 +4,7 @@ import kleur from 'kleur';
 import { callCommand } from '../commands/call.js';
 import { configCommand } from '../commands/config.js';
 import { findContactCommand } from '../commands/find-contact.js';
+import { flightqueueCommand } from '../commands/flightqueue.js';
 import { serverCommand } from '../commands/server.js';
 import type { CliColors, CliContext } from './shared.js';
 
@@ -46,6 +47,7 @@ export function createProgram(): Command {
 
   // Register commands
   findContactCommand(program, getContext);
+  flightqueueCommand(program, getContext);
   configCommand(program, getContext);
   serverCommand(program, getContext);
   callCommand(program, getContext);
