@@ -5,6 +5,7 @@ import { callCommand } from '../commands/call.js';
 import { checkAvailabilityCommand } from '../commands/check-availability.js';
 import { configCommand } from '../commands/config.js';
 import { findContactCommand } from '../commands/find-contact.js';
+import { flightqueueCommand } from '../commands/flightqueue.js';
 import { searchCommand } from '../commands/search.js';
 import { serverCommand } from '../commands/server.js';
 import type { CliColors, CliContext } from './shared.js';
@@ -48,6 +49,7 @@ export function createProgram(): Command {
 
   // Register commands
   findContactCommand(program, getContext);
+  flightqueueCommand(program, getContext);
   configCommand(program, getContext);
   serverCommand(program, getContext);
   callCommand(program, getContext);
