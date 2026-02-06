@@ -9,6 +9,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mockConversationAi = vi.hoisted(() => ({
   getGreeting: vi.fn().mockResolvedValue('Hello, this is an AI assistant.'),
   respond: vi.fn().mockResolvedValue('Thank you for your response.'),
+  respondStreaming: vi.fn().mockImplementation(async function* () {
+    yield 'Thank you for your response.';
+    return 'Thank you for your response.';
+  }),
   instances: [] as any[],
 }));
 
@@ -69,6 +73,7 @@ vi.mock('../src/lib/call/conversation-ai.js', () => {
   class MockConversationAI {
     getGreeting = mockConversationAi.getGreeting;
     respond = mockConversationAi.respond;
+    respondStreaming = mockConversationAi.respondStreaming;
     complete = false;
     constructor() {
       mockConversationAi.instances.push(this);
@@ -181,6 +186,10 @@ describe('CallSession', () => {
     mockConversationAi.instances = [];
     mockConversationAi.getGreeting.mockResolvedValue('Hello, this is an AI assistant.');
     mockConversationAi.respond.mockResolvedValue('Thank you for your response.');
+    mockConversationAi.respondStreaming.mockImplementation(async function* () {
+      yield 'Thank you for your response.';
+      return 'Thank you for your response.';
+    });
 
     // Intercept console.log to capture error messages
     console.log = (...args: any[]) => {
@@ -549,7 +558,10 @@ describe('CallSession', () => {
       mockConversationAi.getGreeting.mockResolvedValue(
         'Hi, this is an AI assistant. Would you be able to offer a better direct rate?',
       );
-      mockConversationAi.respond.mockResolvedValue('Great, what direct price can you offer?');
+      mockConversationAi.respondStreaming.mockImplementation(async function* () {
+        yield 'Great, what direct price can you offer?';
+        return 'Great, what direct price can you offer?';
+      });
 
       await session.initializeMediaStream(mockWs as any, startMessage);
       await vi.advanceTimersByTimeAsync(1700); // greeting delay + post-TTS suppression window
@@ -557,8 +569,8 @@ describe('CallSession', () => {
       mockSTT.emit('transcript', { text: 'Yes.', isFinal: true });
       await vi.advanceTimersByTimeAsync(1200); // debounce + response
 
-      expect(mockConversationAi.respond).toHaveBeenCalled();
-      const [humanText, turnContext] = mockConversationAi.respond.mock.calls.at(-1) as [
+      expect(mockConversationAi.respondStreaming).toHaveBeenCalled();
+      const [humanText, turnContext] = mockConversationAi.respondStreaming.mock.calls.at(-1) as [
         string,
         {
           shortAcknowledgement: boolean;
