@@ -16,6 +16,7 @@ const VALID_KEYS: (keyof ConciergeConfig)[] = [
   'ngrokAuthToken',
   'callServerPort',
   'anthropicApiKey',
+  'callOutputDir',
 ];
 
 export function configCommand(program: Command, getContext: () => CliContext): void {
