@@ -297,6 +297,14 @@ function runCallOverControlSocket(
   let opened = false;
   let done = false;
   let rlInterface: readline.Interface | null = null;
+  const transcriptLines: string[] = [];
+  const transcriptPath = join(logDir, 'transcript.txt');
+
+  const flushTranscript = () => {
+    if (transcriptLines.length > 0) {
+      writeFileSync(transcriptPath, transcriptLines.join('\n') + '\n');
+    }
+  };
 
   return new Promise<void>((resolve, reject) => {
     const cleanup = () => {
@@ -309,7 +317,8 @@ function runCallOverControlSocket(
       if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
         ws.close();
       }
-      process.off('SIGINT', onSigint);
+      process.off('SIGINT', onShutdown);
+      process.off('SIGTERM', onShutdown);
     };
 
     const safeResolve = () => {
@@ -408,6 +417,9 @@ Phone: ${options.customerPhone}${options.context ? `\n${options.context}` : ''}`
             if (msg.isFinal) {
               const label = msg.role === 'assistant' ? colors.primary('AI') : colors.secondary('Human');
               console.log(`${label}: ${msg.text}`);
+              const rawLabel = msg.role === 'assistant' ? 'AI' : 'Human';
+              transcriptLines.push(`${rawLabel}: ${msg.text}`);
+              flushTranscript();
             }
             break;
           case 'call_ended':
@@ -419,9 +431,11 @@ Phone: ${options.customerPhone}${options.context ? `\n${options.context}` : ''}`
             console.log(colors.highlight('Summary:'));
             console.log(msg.summary);
 
-            // Save transcript to log dir
-            const transcriptPath = join(logDir, 'transcript.txt');
-            writeFileSync(transcriptPath, msg.summary);
+            // Save transcript with summary to log dir
+            transcriptLines.push('─'.repeat(50));
+            transcriptLines.push('Summary:');
+            transcriptLines.push(msg.summary);
+            flushTranscript();
             console.log('');
             console.log(colors.muted(`Transcript saved: ${transcriptPath}`));
 
@@ -449,6 +463,10 @@ Phone: ${options.customerPhone}${options.context ? `\n${options.context}` : ''}`
 
     ws.on('close', () => {
       if (!callEnded && opened) {
+        if (transcriptLines.length > 0) {
+          transcriptLines.push('[Call interrupted — connection lost]');
+          flushTranscript();
+        }
         console.log(colors.warning('Connection closed'));
         if (callId) {
           safeReject(new Error('Lost connection to call server before call ended.'));
@@ -466,8 +484,12 @@ Phone: ${options.customerPhone}${options.context ? `\n${options.context}` : ''}`
       }
     });
 
-    const onSigint = () => {
+    const onShutdown = () => {
       console.log('');
+      if (transcriptLines.length > 0 && !callEnded) {
+        transcriptLines.push('[Call interrupted]');
+        flushTranscript();
+      }
       if (callId && !callEnded && ws.readyState === WebSocket.OPEN) {
         console.log(colors.info('Hanging up...'));
         ws.send(JSON.stringify({ type: 'hangup', callId } satisfies ClientMessage));
@@ -476,7 +498,8 @@ Phone: ${options.customerPhone}${options.context ? `\n${options.context}` : ''}`
         safeResolve();
       }
     };
-    process.on('SIGINT', onSigint);
+    process.on('SIGINT', onShutdown);
+    process.on('SIGTERM', onShutdown);
   });
 }
 
