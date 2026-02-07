@@ -348,7 +348,7 @@ export const HOLD_QUEUE_SCRIPTS: ConversationScript[] = [
   {
     id: 'transferred-call-non-english',
     name: 'Call Transferred to Non-English Speaker',
-    goal: 'Book an Ocean View Pool Junior Suite at Trisara Resort for May 6-9, 2026',
+    goal: 'Book an Ocean View Pool Junior Suite at Trisara Resort for May 6, 2026 to May 9, 2026',
     context: 'Hotel: Trisara Resort, Phuket. Customer: Derek Rein. Email: alexanderderekrein@gmail.com.',
     expectedOutcome: 'partial',
     turns: [
@@ -476,6 +476,71 @@ export const EDGE_CASE_SCRIPTS: ConversationScript[] = [
       { human: 'ElectronicsPlushowareyoutodayhowcanIhelpyou?', pauseMs: 200 },
       { human: 'Addressisonetwothreemainstreetdowntownnexttothecoffeeshopcantopennintosixyougotit?', pauseMs: 200 },
       { human: 'Yeponetwothreemainstreetseeyousoon!', pauseMs: 200 },
+    ],
+  },
+  // Regression: +6676317200 (Trisara resort, Thailand) — hotel agent couldn't parse spoken
+  // English dates. "twenty twenty-six" was heard as "76" then "1999". AI repeated same
+  // phrasing verbatim, said "next year" (wrong — it IS this year), and said "just myself"
+  // instead of "the guest".
+  {
+    id: 'non-native-english-date-confusion',
+    name: 'Non-Native English Speaker - Date Confusion (Trisara)',
+    goal: 'Book an Ocean View Pool Junior Suite at Trisara Resort for May 6, 2026 to May 9, 2026',
+    context:
+      'Hotel: Trisara Resort, Phuket. Room: Ocean View Pool Junior Suite. ' +
+      'Dates: May 6, 2026 to May 9, 2026. Customer: Derek Rein (D-E-R-E-K R-E-I-N). ' +
+      'Email: alexanderderekrein@gmail.com.',
+    expectedOutcome: 'partial',
+    turns: [
+      { human: 'Thank you for calling. How may I help you?', pauseMs: 300 },
+      { human: "Yes, ma'am.", pauseMs: 300 },
+      {
+        human: 'Let me transfer you to reservation, please.',
+        expectedBehavior: 'should accept the transfer — "Sure, I\'ll hold" or similar',
+        pauseMs: 2000,
+      },
+      { human: 'Reservation. Sandra speaking. How may I assist you?', pauseMs: 500 },
+      {
+        human: 'Which month?',
+        expectedBehavior: 'should provide month and dates clearly — not repeat the whole pitch',
+        pauseMs: 500,
+      },
+      {
+        human: 'Could you provide me the period of stay? Check-in and check-out date.',
+        expectedBehavior: 'should give check-in and check-out dates separately, include year',
+        pauseMs: 500,
+      },
+      {
+        human: 'Twenty twenty six?',
+        expectedBehavior: 'should confirm year clearly — "two thousand twenty-six" — NEVER say "next year"',
+        pauseMs: 500,
+      },
+      {
+        human: 'I mean, the date. The date checking in.',
+        expectedBehavior:
+          'should give JUST the check-in date in a DIFFERENT format — MUST NOT repeat previous answer verbatim',
+        pauseMs: 500,
+      },
+      {
+        human: 'Could you repeat when you would like to check in and check out?',
+        expectedBehavior: 'should rephrase in simpler format (digits, day/month/year) — NOT verbatim same response',
+        pauseMs: 500,
+      },
+      {
+        human: 'May 6 to May 9. How many people?',
+        expectedBehavior: 'should say "one guest" or "for Derek Rein" — NEVER say "myself" or "just me"',
+        pauseMs: 500,
+      },
+      {
+        human: 'Where are you calling from?',
+        expectedBehavior: 'should explain calling on behalf of the guest, not imply the AI is the guest',
+        pauseMs: 500,
+      },
+      {
+        human: 'Alright. Please hold one moment.',
+        expectedBehavior: 'brief hold acknowledgement',
+        pauseMs: 500,
+      },
     ],
   },
 ];

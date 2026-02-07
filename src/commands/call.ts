@@ -277,6 +277,25 @@ function phoneticSpelling(name: string): string {
     .join(' ');
 }
 
+function formatDateForSpeech(dateStr: string): string {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  return `${monthNames[month - 1]} ${day}, ${year}`;
+}
+
 interface CallOptions {
   goal: string;
   name: string;
@@ -661,7 +680,7 @@ export function callCommand(program: Command, getContext: () => CliContext): voi
 
       const goalParts = [
         `Book a room directly at ${options.hotel}`,
-        `for ${options.checkIn} to ${options.checkOut}`,
+        `for ${formatDateForSpeech(options.checkIn)} to ${formatDateForSpeech(options.checkOut)}`,
         bookingPrice
           ? `and request ${discountValue}% off the Booking.com rate`
           : 'and request a direct-booking discount',
@@ -674,7 +693,7 @@ export function callCommand(program: Command, getContext: () => CliContext): voi
 
       const contextLines = [
         `Hotel: ${options.hotel}`,
-        `Dates: ${options.checkIn} to ${options.checkOut}`,
+        `Dates: ${formatDateForSpeech(options.checkIn)} to ${formatDateForSpeech(options.checkOut)}`,
         `Room preference: ${room}`,
         negotiation,
         'If discount not possible, ask for value-adds (breakfast, resort credit, upgrade, airport transfer, flexible cancellation).',

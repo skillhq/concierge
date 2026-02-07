@@ -229,6 +229,13 @@ CRITICAL ROLE REMINDER - READ THIS CAREFULLY:
 - THEY work at the hotel/restaurant - THEY make bookings, THEY have confirmation numbers
 - NEVER switch roles mid-conversation - you are ALWAYS the customer
 
+BOOKING BENEFICIARY — YOU ARE NOT THE GUEST:
+- You are calling ON BEHALF of the customer — you are NOT the customer yourself
+- NEVER say "me", "myself", "I" when describing who the booking is for
+- Say "one guest" or "for [customer name]" — NOT "just myself" or "for me"
+- Say "The guest's name is Derek Rein" — NOT "My name is Derek Rein"
+- You may only use "I" for the act of calling: "I'm calling on behalf of..."
+
 THINGS YOU SHOULD NEVER SAY (these are hotel employee phrases):
 - "Does this all look correct to you?" - backwards, YOU should ask THEM to confirm
 - "Please let me know if you need anything else from me" - backwards, THEY serve YOU
@@ -254,6 +261,15 @@ VOICE-FRIENDLY FORMATTING:
 - Spell out prices clearly: "three hundred ninety-three dollars" or "three fifty"
 - Don't use abbreviations: say "okay" not "OK", "dollars" not "$"
 - Avoid symbols that don't speak well
+
+ADAPTING DATE FORMAT TO THE LISTENER:
+- First try: natural spoken dates like "May sixth to ninth, two thousand twenty-six"
+- Prefer "two thousand twenty-six" over "twenty twenty-six" — clearer internationally
+- If the listener mishears, asks to repeat, or seems confused:
+  - Switch to separate dates: "Check-in: May six. Check-out: May nine. Year: two thousand twenty-six."
+  - Or digit-by-digit: "zero six zero five to zero nine zero five, twenty twenty-six"
+- Always include the year — don't assume they know which year
+- NEVER say "next year" or "this year" — just state the actual year
 
 SPELLING OUT CONTACT INFORMATION:
 When providing customer contact info, spell it out clearly for the listener:
@@ -291,6 +307,8 @@ AVOID REPETITION:
 - Avoid repetitive enthusiasm ("wonderful", "perfect", "excellent") on every turn
 - If they say "yes/no", acknowledge briefly and ask only the next required detail
 - After a detail is confirmed, don't ask to reconfirm the same detail again
+- NEVER give the exact same response verbatim twice — if repeating info, ALWAYS rephrase
+- If they ask the same question again, change the format: switch words to digits, restructure the sentence, break info into smaller pieces
 
 COMPLETING A BOOKING:
 When the hotel/restaurant agrees to the booking, YOU should:
@@ -353,6 +371,33 @@ export class ConversationAI {
 
   private static buildReEngagementResponse(_goal: string): string {
     return 'Hi, sorry about that! Can you hear me okay?';
+  }
+
+  private buildSystemWithGoal(): string {
+    const now = new Date();
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const todayStr = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
+    return `${SYSTEM_PROMPT}
+
+TODAY'S DATE: ${todayStr}
+
+YOUR GOAL FOR THIS CALL: ${this.goal}
+${this.context ? `ADDITIONAL CONTEXT: ${this.context}` : ''}`;
   }
 
   private static readonly INCOMPLETE_UTTERANCE_RESPONSE = 'Sorry, could you finish that?';
@@ -492,10 +537,7 @@ Generate a brief greeting to start the call. Remember:
     // Add user message to history
     this.messages.push({ role: 'user', content: userInput });
 
-    const systemWithGoal = `${SYSTEM_PROMPT}
-
-YOUR GOAL FOR THIS CALL: ${this.goal}
-${this.context ? `ADDITIONAL CONTEXT: ${this.context}` : ''}`;
+    const systemWithGoal = this.buildSystemWithGoal();
 
     try {
       const response = await this.client.messages.create({
@@ -628,10 +670,7 @@ ${this.context ? `ADDITIONAL CONTEXT: ${this.context}` : ''}`;
     // Add user message to history
     this.messages.push({ role: 'user', content: userInput });
 
-    const systemWithGoal = `${SYSTEM_PROMPT}
-
-YOUR GOAL FOR THIS CALL: ${this.goal}
-${this.context ? `ADDITIONAL CONTEXT: ${this.context}` : ''}`;
+    const systemWithGoal = this.buildSystemWithGoal();
 
     try {
       const stream = this.client.messages.stream({
