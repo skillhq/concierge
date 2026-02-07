@@ -149,18 +149,13 @@ export function isRepeatRequest(text: string): boolean {
   return false;
 }
 
-const RE_ENGAGEMENT_PHRASES = new Set(['hello', 'hi', 'hey', 'hi there', 'hey there', 'hello hello']);
-
-export function isReEngagement(text: string): boolean {
-  const normalized = text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-  if (!normalized) return false;
-  return RE_ENGAGEMENT_PHRASES.has(normalized);
-}
+// Re-engagement detection (isReEngagement) was intentionally removed in v1.15.1.
+// The hardcoded canned response ("Hi, sorry about that! Can you hear me okay?")
+// fired on ANY bare "Hello?" — including after call transfers, where a NEW person
+// picked up. This caused the AI to skip re-introduction. The LLM now handles all
+// "Hello?" inputs using full conversation context, which adds ~200-400ms latency
+// on Haiku but correctly distinguishes post-transfer from reconnection.
+// See: +6676310100 call transcript (Trisara Resort, 2026-02-07).
 
 export function isAnotherRequest(text: string): boolean {
   const normalized = text
@@ -256,6 +251,12 @@ AI DISCLOSURE:
 - Be upfront about being an AI - never try to hide it
 - If asked about being an AI, confirm it honestly
 
+AI LIMITATIONS — ACTIONS YOU CANNOT PERFORM:
+- You CANNOT send emails, access websites, or perform any actions outside this phone call
+- You can ONLY communicate verbally over the phone
+- If they ask you to "send an email": explain you're an AI on a phone call and cannot send emails, but offer to provide all booking details verbally or ask for their email so the customer can follow up directly
+- If they ask you to do something impossible: politely explain the limitation and suggest completing it within the phone call
+
 VOICE-FRIENDLY FORMATTING:
 - Spell out numbers for dates: "March twelfth to fourteenth" not "March 12-14"
 - Spell out prices clearly: "three hundred ninety-three dollars" or "three fifty"
@@ -277,6 +278,8 @@ When providing customer contact info, spell it out clearly for the listener:
 For EMAIL addresses:
 - Say it phonetically: "john dot smith at gmail dot com"
 - Spell unusual parts: "That's J-O-H-N dot S-M-I-T-H at gmail dot com"
+- When spelling letter-by-letter, spell the COMPLETE handle — do NOT skip or truncate any characters
+- For long email handles, break into logical groups: "alexander" then "derek" then "rein"
 - Always clarify common confusions: "dot" not "period", "at" not "@"
 
 For PHONE numbers:
@@ -298,6 +301,11 @@ CONVERSATION GUIDELINES:
 7. Keep most turns under ~30 words (except when spelling an email/phone)
 8. Ask only ONE question per turn unless absolutely necessary
 9. If the human gives a very short acknowledgement ("yes", "sure", "true"), treat it as answering your most recent question and move to the next step
+
+HANDLING RE-ENGAGEMENT (someone says "Hello?" or "Hi" after silence):
+- If the conversation was recently transferred or on hold, re-introduce yourself briefly to the new person
+- If it's clearly the same person checking if you're still there, briefly confirm and continue
+- Use conversation context to decide — if someone said "let me transfer you" or "please hold", the next "Hello?" is likely a new person
 
 AVOID REPETITION:
 - Once you've stated the dates, price, or room name, don't keep repeating them
@@ -357,7 +365,6 @@ export class ConversationAI {
   private readonly goal: string;
   private readonly context: string;
   private readonly model: string;
-  private readonly reEngagementResponse: string;
   private isComplete = false;
 
   constructor(config: ConversationConfig) {
@@ -366,11 +373,6 @@ export class ConversationAI {
     this.context = config.context || '';
     // Use a fast current Haiku model for phone-call latency.
     this.model = config.model || 'claude-haiku-4-5';
-    this.reEngagementResponse = ConversationAI.buildReEngagementResponse(config.goal);
-  }
-
-  private static buildReEngagementResponse(_goal: string): string {
-    return 'Hi, sorry about that! Can you hear me okay?';
   }
 
   private buildSystemWithGoal(): string {
@@ -440,13 +442,6 @@ Generate a brief greeting to start the call. Remember:
   async respond(humanSaid: string, turnContext?: TurnContext): Promise<string | null> {
     if (this.isComplete) {
       return null;
-    }
-
-    const hasAssistantMessage = this.messages.some((m) => m.role === 'assistant');
-    if (hasAssistantMessage && isReEngagement(humanSaid)) {
-      this.messages.push({ role: 'user', content: humanSaid });
-      this.messages.push({ role: 'assistant', content: this.reEngagementResponse });
-      return this.reEngagementResponse;
     }
 
     if (isRepeatRequest(humanSaid)) {
@@ -542,7 +537,11 @@ Generate a brief greeting to start the call. Remember:
     try {
       const response = await this.client.messages.create({
         model: this.model,
-        max_tokens: 150, // Keep responses short for voice
+        // 200 tokens: enough for email spelling (letter-by-letter can be 40+ tokens)
+        // while still keeping voice responses concise. Bumped from 150 after
+        // AI truncated "alexanderderekrein" spelling — dropped "R-E-I-N".
+        // See: +6676310100 call transcript (Trisara, 2026-02-07).
+        max_tokens: 200,
         system: systemWithGoal,
         messages: this.messages,
       });
@@ -593,14 +592,6 @@ Generate a brief greeting to start the call. Remember:
   async *respondStreaming(humanSaid: string, turnContext?: TurnContext): AsyncGenerator<string, string> {
     if (this.isComplete) {
       return '';
-    }
-
-    const hasAssistantMessage = this.messages.some((m) => m.role === 'assistant');
-    if (hasAssistantMessage && isReEngagement(humanSaid)) {
-      this.messages.push({ role: 'user', content: humanSaid });
-      this.messages.push({ role: 'assistant', content: this.reEngagementResponse });
-      yield this.reEngagementResponse;
-      return this.reEngagementResponse;
     }
 
     let userInputOverride: string | null = null;
@@ -675,7 +666,7 @@ Generate a brief greeting to start the call. Remember:
     try {
       const stream = this.client.messages.stream({
         model: this.model,
-        max_tokens: 150,
+        max_tokens: 200, // Match generateResponse — see comment there for rationale
         system: systemWithGoal,
         messages: this.messages,
       });

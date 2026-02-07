@@ -280,6 +280,83 @@ export async function runTranscriptRegressionTests(
     failures.push(`Repeat joke request test failed: ${error}`);
   }
 
+  // Case 9: Post-transfer "Hello?" should re-introduce, not give canned response.
+  // Regression: +6676310100 (Trisara, 2026-02-07) — after transfer, AI gave
+  // "Hi, sorry about that! Can you hear me okay?" instead of re-introducing.
+  tests++;
+  try {
+    const ai = new ConversationAI({
+      apiKey: config.anthropicApiKey,
+      goal: 'Book an Ocean View Pool Junior Suite at Trisara Resort for May 6-9, 2026',
+      context: 'Hotel: Trisara Resort. Customer: Derek Rein. Email: alexanderderekrein@gmail.com.',
+    });
+    await ai.getGreeting();
+    await ai.respond('Let me transfer you to reservations.');
+    const response = await ai.respond('Hello?');
+    if (!response) {
+      failures.push('Post-transfer hello: empty response');
+    } else {
+      const lower = response.toLowerCase();
+      if (lower === 'hi, sorry about that! can you hear me okay?') {
+        failures.push('Post-transfer hello: gave canned re-engagement response instead of re-introducing');
+      }
+      if (!includesAny(response, ['ai', 'assistant', 'calling', 'behalf', 'booking', 'reservation'])) {
+        failures.push('Post-transfer hello: should re-introduce purpose — mention AI/assistant/booking');
+      }
+    }
+  } catch (error) {
+    failures.push(`Post-transfer hello test failed: ${error}`);
+  }
+
+  // Case 10: "Send email to us" should explain AI cannot send emails.
+  // Regression: +6676310100 (Trisara, 2026-02-07) — hotel asked AI to email them,
+  // AI misinterpreted and provided its own email address instead.
+  tests++;
+  try {
+    const ai = new ConversationAI({
+      apiKey: config.anthropicApiKey,
+      goal: 'Book an Ocean View Pool Junior Suite at Trisara Resort for May 6-9, 2026',
+      context: 'Hotel: Trisara Resort. Customer: Derek Rein. Email: alexanderderekrein@gmail.com.',
+    });
+    await ai.getGreeting();
+    await ai.respond('How may I help you?');
+    const response = await ai.respond('Could you send email to us, please?');
+    if (!response) {
+      failures.push('Send email request: empty response');
+    } else if (!includesAny(response, ['cannot', "can't", 'unable', 'not able', 'phone'])) {
+      failures.push('Send email request: should explain AI cannot send emails');
+    }
+  } catch (error) {
+    failures.push(`Send email request test failed: ${error}`);
+  }
+
+  // Case 11: Email spelling should include all characters (no truncation).
+  // Regression: +6676310100 (Trisara, 2026-02-07) — AI spelled
+  // "A-L-E-X-A-N-D-E-R-D-E-R-E-K" but dropped "R-E-I-N" from "alexanderderekrein".
+  tests++;
+  try {
+    const ai = new ConversationAI({
+      apiKey: config.anthropicApiKey,
+      goal: 'Book a room at Trisara Resort',
+      context: 'Hotel: Trisara Resort. Customer: Derek Rein. Email: alexanderderekrein@gmail.com.',
+    });
+    await ai.getGreeting();
+    await ai.respond('May I have the email address?');
+    const response = await ai.respond('Could you spell it out please?');
+    if (!response) {
+      failures.push('Email spelling: empty response');
+    } else {
+      const lower = response.toLowerCase();
+      const hasFullEmail = lower.includes('alexanderderekrein');
+      const hasCorrectSpelling = lower.includes('r-e-i-n') || lower.includes('r e i n');
+      if (!hasFullEmail && !hasCorrectSpelling) {
+        failures.push('Email spelling: response is missing "rein" portion of the email handle');
+      }
+    }
+  } catch (error) {
+    failures.push(`Email spelling test failed: ${error}`);
+  }
+
   return {
     passed: failures.length === 0,
     tests,

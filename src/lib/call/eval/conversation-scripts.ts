@@ -361,6 +361,44 @@ export const HOLD_QUEUE_SCRIPTS: ConversationScript[] = [
       { human: 'Yes, we have an Ocean View Pool Junior Suite available. Shall I book it?', pauseMs: 500 },
     ],
   },
+  // Regression: +6676310100 (Trisara, 2026-02-07) — after transfer, AI gave canned
+  // "Hi, sorry about that!" instead of re-introducing itself. Hotel asked "send email
+  // to us" and AI gave its own email. AI also dropped "R-E-I-N" from email spelling.
+  {
+    id: 'trisara-transfer-email-spelling',
+    name: 'Trisara Resort Transfer + Email Request + Spelling (Regression)',
+    goal: 'Book an Ocean View Pool Junior Suite at Trisara Resort for May 6, 2026 to May 9, 2026',
+    context:
+      'Hotel: Trisara Resort, Phuket. Customer: Derek Rein (D-E-R-E-K R-E-I-N). ' +
+      'Email: alexanderderekrein@gmail.com. Room: Ocean View Pool Junior Suite.',
+    expectedOutcome: 'partial',
+    turns: [
+      { human: 'Thank you for calling. Let me connect you to reservations.', pauseMs: 300 },
+      { human: '...', pauseMs: 2000 },
+      {
+        human: 'Hello?',
+        expectedBehavior:
+          'should re-introduce itself as an AI assistant calling on behalf of the customer — NOT give a canned "Hi, sorry about that! Can you hear me okay?"',
+        pauseMs: 500,
+      },
+      {
+        human: 'Yes, I can hear you. How may I help?',
+        pauseMs: 500,
+      },
+      {
+        human: 'Could you send email to us, please?',
+        expectedBehavior:
+          'should explain it CANNOT send emails since it is an AI on a phone call — should NOT give its own email address as if sending an email',
+        pauseMs: 500,
+      },
+      {
+        human: 'May I have the email address please?',
+        expectedBehavior:
+          'should spell out the COMPLETE email: A-L-E-X-A-N-D-E-R-D-E-R-E-K-R-E-I-N at gmail dot com — must NOT drop letters',
+        pauseMs: 500,
+      },
+    ],
+  },
 ];
 
 /**
