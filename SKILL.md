@@ -84,6 +84,22 @@ concierge call "+1-555-123-4567" \
 
 The `call` command now auto-manages infra by default: if local server is down, it starts `ngrok` + call server automatically and stops both when the call ends.
 
+### 5) Direct-booking negotiation (minimal inputs)
+
+Uses customer defaults from config and only needs dates plus optional Booking.com price and room type.
+
+```bash
+concierge direct-booking "+6676310100" \
+  --hotel "Trisara Resort" \
+  -i 2026-05-06 -o 2026-05-09 \
+  --room "Ocean View Pool Junior Suite" \
+  --booking-price 115000 \
+  --currency THB
+```
+
+If `--room` is omitted, the assistant asks for the cheapest available room.  
+If `--booking-price` is omitted, it negotiates for the best direct rate and value-adds.
+
 ## Supported listing platforms
 
 - **Airbnb**: `airbnb.com/rooms/...`
@@ -122,6 +138,16 @@ concierge call "+1-555-123-4567" \
   --interactive
 ```
 
+### Direct-booking negotiation with config defaults
+Run:
+```bash
+concierge direct-booking "+6676310100" \
+  --hotel "Trisara Resort" \
+  -i 2026-05-06 -o 2026-05-09 \
+  --booking-price 115000 \
+  --currency THB
+```
+
 ### JSON output for scripting (contact lookup)
 ```bash
 concierge find-contact --json "https://..."
@@ -154,6 +180,11 @@ concierge config set deepgramApiKey "<key>"
 concierge config set elevenLabsApiKey "<key>"
 concierge config set elevenLabsVoiceId "EXAVITQu4vr4xnSDxMaL"
 concierge config set anthropicApiKey "<key>"
+
+# Customer defaults for direct-booking
+concierge config set customerName "Derek Rein"
+concierge config set customerEmail "derek@example.com"
+concierge config set customerPhone "+1-555-000-1111"
 
 # Optional for auto ngrok auth
 concierge config set ngrokAuthToken "<token>"

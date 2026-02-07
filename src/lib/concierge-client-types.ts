@@ -60,6 +60,10 @@ export interface ConciergeConfig {
   googlePlacesApiKey?: string;
   instagramSessionId?: string;
   timeoutMs?: number;
+  // Customer defaults
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   // Voice call configuration
   twilioAccountSid?: string;
   twilioAuthToken?: string;

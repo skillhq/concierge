@@ -282,6 +282,88 @@ interface CallOptions {
   autoInfra: boolean;
 }
 
+interface DirectBookingOptions {
+  hotel: string;
+  checkIn: string;
+  checkOut: string;
+  room?: string;
+  bookingPrice?: string;
+  currency?: string;
+  discount?: string;
+  context?: string;
+  port?: string;
+  outputDir?: string;
+  interactive: boolean;
+  autoInfra: boolean;
+}
+
+async function executeCall(phone: string, options: CallOptions, ctx: CliContext): Promise<void> {
+  const { colors } = ctx;
+  const config = loadConfig();
+  const port = options.port ? Number.parseInt(options.port, 10) : (config.callServerPort ?? 3000);
+
+  if (Number.isNaN(port) || port < 1 || port > 65535) {
+    console.log(colors.error(`Invalid port: ${options.port}`));
+    process.exit(1);
+  }
+
+  let runtime: ManagedInfraRuntime = { enabled: false };
+  const callOutputBase = options.outputDir ?? config.callOutputDir ?? undefined;
+  // Log directory for call artifacts (transcript, recording) — set below
+  let logDir: string | undefined;
+
+  try {
+    let serverReady = await isServerReachable(port, 1000);
+    if (!serverReady) {
+      if (!options.autoInfra) {
+        console.log(colors.error('Call server is not running and auto-infra is disabled.'));
+        console.log(colors.info('Start manually with:'));
+        console.log(colors.muted('  concierge server start --public-url <ngrok-url>'));
+        process.exit(1);
+      }
+
+      const ngrokPreflight = await preflightNgrok();
+      if (!ngrokPreflight.ok) {
+        throw new Error(ngrokPreflight.message);
+      }
+      console.log(colors.info(`[Preflight] ${ngrokPreflight.message}`));
+
+      console.log(colors.info('Starting managed infrastructure (ngrok + server)...'));
+      runtime = await startManagedInfra(port, config.ngrokAuthToken, callOutputBase, phone);
+      logDir = runtime.logDir!;
+      serverReady = true;
+
+      console.log(colors.highlight('Infrastructure Logs:'));
+      if (runtime.serverLogPath) {
+        console.log(colors.muted(`  Server: ${runtime.serverLogPath}`));
+      }
+      if (runtime.ngrokLogPath) {
+        console.log(colors.muted(`  Ngrok:  ${runtime.ngrokLogPath}`));
+      }
+      console.log('');
+    }
+
+    if (!serverReady) {
+      throw new Error(`Unable to reach call server on port ${port}`);
+    }
+
+    // When server was already running, create a standalone log dir
+    if (!logDir) {
+      logDir = createInfraLogPaths(callOutputBase, phone).logDir;
+    }
+
+    console.log(colors.info('Connecting to call server...'));
+    console.log(colors.muted(`Call logs: ${logDir}`));
+    await runCallOverControlSocket(phone, options, port, ctx, logDir);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(colors.error(`Call failed: ${message}`));
+    process.exitCode = 1;
+  } finally {
+    await stopManagedInfra(runtime);
+  }
+}
+
 function runCallOverControlSocket(
   phone: string,
   options: CallOptions,
@@ -519,69 +601,95 @@ export function callCommand(program: Command, getContext: () => CliContext): voi
     .option('--no-auto-infra', 'Do not auto-start ngrok + server when server is unavailable')
     .action(async (phone: string, options: CallOptions) => {
       const ctx = getContext();
-      const { colors } = ctx;
-      const config = loadConfig();
-      const port = options.port ? Number.parseInt(options.port, 10) : (config.callServerPort ?? 3000);
-
-      if (Number.isNaN(port) || port < 1 || port > 65535) {
-        console.log(colors.error(`Invalid port: ${options.port}`));
-        process.exit(1);
-      }
-
-      let runtime: ManagedInfraRuntime = { enabled: false };
-      const callOutputBase = options.outputDir ?? config.callOutputDir ?? undefined;
-      // Log directory for call artifacts (transcript, recording) — set below
-      let logDir: string | undefined;
-
-      try {
-        let serverReady = await isServerReachable(port, 1000);
-        if (!serverReady) {
-          if (!options.autoInfra) {
-            console.log(colors.error('Call server is not running and auto-infra is disabled.'));
-            console.log(colors.info('Start manually with:'));
-            console.log(colors.muted('  concierge server start --public-url <ngrok-url>'));
-            process.exit(1);
-          }
-
-          const ngrokPreflight = await preflightNgrok();
-          if (!ngrokPreflight.ok) {
-            throw new Error(ngrokPreflight.message);
-          }
-          console.log(colors.info(`[Preflight] ${ngrokPreflight.message}`));
-
-          console.log(colors.info('Starting managed infrastructure (ngrok + server)...'));
-          runtime = await startManagedInfra(port, config.ngrokAuthToken, callOutputBase, phone);
-          logDir = runtime.logDir!;
-          serverReady = true;
-
-          console.log(colors.highlight('Infrastructure Logs:'));
-          if (runtime.serverLogPath) {
-            console.log(colors.muted(`  Server: ${runtime.serverLogPath}`));
-          }
-          if (runtime.ngrokLogPath) {
-            console.log(colors.muted(`  Ngrok:  ${runtime.ngrokLogPath}`));
-          }
-          console.log('');
-        }
-
-        if (!serverReady) {
-          throw new Error(`Unable to reach call server on port ${port}`);
-        }
-
-        // When server was already running, create a standalone log dir
-        if (!logDir) {
-          logDir = createInfraLogPaths(callOutputBase, phone).logDir;
-        }
-
-        console.log(colors.info('Connecting to call server...'));
-        console.log(colors.muted(`Call logs: ${logDir}`));
-        await runCallOverControlSocket(phone, options, port, ctx, logDir);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(colors.error(`Call failed: ${message}`));
-        process.exitCode = 1;
-      } finally {
-        await stopManagedInfra(runtime);
-      }
+      await executeCall(phone, options, ctx);
     });
+
+  program
+    .command('direct-booking')
+    .description('Book a hotel directly and negotiate a discount (uses customer info from config)')
+    .argument('<phone>', 'Hotel phone number to call (E.164 format preferred)')
+    .requiredOption('--hotel <name>', 'Hotel name (e.g., "Trisara Resort")')
+    .requiredOption('-i, --check-in <date>', 'Check-in date (YYYY-MM-DD)')
+    .requiredOption('-o, --check-out <date>', 'Check-out date (YYYY-MM-DD)')
+    .option('-r, --room <room>', 'Room type (default: cheapest available room)')
+    .option('--booking-price <amount>', 'Reference price from Booking.com (numeric)')
+    .option('--currency <code>', 'Currency code for reference price (default: THB)', 'THB')
+    .option('--discount <percent>', 'Discount percent to request (default: 10)', '10')
+    .option('-c, --context <context>', 'Additional context to pass to the assistant')
+    .option('-p, --port <port>', 'Server port')
+    .option('--interactive', 'Interactive mode - type responses manually', false)
+    .option('--output-dir <dir>', 'Directory for call logs, transcripts, and recordings')
+    .option('--no-auto-infra', 'Do not auto-start ngrok + server when server is unavailable')
+    .action(async (phone: string, options: DirectBookingOptions) => {
+        const ctx = getContext();
+        const { colors } = ctx;
+        const config = loadConfig();
+
+        if (!config.customerName || !config.customerEmail || !config.customerPhone) {
+          console.log(colors.error('Missing customer defaults in config.'));
+          console.log(colors.muted('Set: customerName, customerEmail, customerPhone'));
+          process.exit(1);
+        }
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(options.checkIn) || !/^\d{4}-\d{2}-\d{2}$/.test(options.checkOut)) {
+          console.log(colors.error('Dates must be in YYYY-MM-DD format.'));
+          process.exit(1);
+        }
+
+        const discountValue = Number.parseFloat(options.discount ?? '10');
+        if (Number.isNaN(discountValue) || discountValue <= 0 || discountValue >= 100) {
+          console.log(colors.error(`Invalid discount percent: ${options.discount}`));
+          process.exit(1);
+        }
+
+        const room = options.room?.trim() || 'cheapest available room';
+        const currency = (options.currency ?? 'THB').trim().toUpperCase();
+
+        const bookingPrice = options.bookingPrice ? Number.parseFloat(options.bookingPrice) : undefined;
+        if (options.bookingPrice && Number.isNaN(bookingPrice)) {
+          console.log(colors.error(`Invalid booking price: ${options.bookingPrice}`));
+          process.exit(1);
+        }
+
+        const goalParts = [
+          `Book a room directly at ${options.hotel}`,
+          `for ${options.checkIn} to ${options.checkOut}`,
+          bookingPrice
+            ? `and request ${discountValue}% off the Booking.com rate`
+            : 'and request a direct-booking discount',
+        ];
+        const goal = `${goalParts.join(' ')}.`;
+
+        const negotiation = bookingPrice
+          ? `Reference rate: ${currency} ${bookingPrice.toFixed(0)} on Booking.com. Ask for a ${discountValue}% direct-booking discount.`
+          : `Ask for the best direct-booking rate and request a ${discountValue}% discount if possible.`;
+
+        const contextLines = [
+          `Hotel: ${options.hotel}`,
+          `Dates: ${options.checkIn} to ${options.checkOut}`,
+          `Room preference: ${room}`,
+          negotiation,
+          'If discount not possible, ask for value-adds (breakfast, resort credit, upgrade, airport transfer, flexible cancellation).',
+          'Confirm final total incl. taxes/fees, cancellation policy, and get a confirmation number.',
+          'Request email confirmation.',
+        ];
+
+        if (options.context) {
+          contextLines.push(`Additional context: ${options.context}`);
+        }
+
+        const callOptions: CallOptions = {
+          goal,
+          name: config.customerName,
+          email: config.customerEmail,
+          customerPhone: config.customerPhone,
+          context: contextLines.join('\n'),
+          port: options.port,
+          outputDir: options.outputDir,
+          interactive: options.interactive,
+          autoInfra: options.autoInfra,
+        };
+
+        await executeCall(phone, callOptions, ctx);
+      });
 }
