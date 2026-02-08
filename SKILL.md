@@ -1,6 +1,6 @@
 ---
 name: concierge
-description: Find accommodation contact details, search for hotels, check availability, and run AI-assisted booking calls
+description: Personal AI concierge for contact lookup, availability checks, and autonomous phone calls
 version: 1.5.0
 triggers:
   - find contact
@@ -16,18 +16,20 @@ triggers:
   - property phone
   - call hotel
   - call property
+  - call business
   - direct booking call
   - search hotels
   - find hotels
   - hotel search
+  - find business contact
   - check availability
   - hotel availability
   - room availability
 ---
 
-# Travel Concierge
+# Concierge
 
-Find contact details (phone, email, WhatsApp, Instagram, etc.) for accommodation listings, search for hotels via Google Places, check availability on Booking.com, and place AI booking calls.
+Find contact details (phone, email, WhatsApp, Instagram, etc.) for listings and businesses, search for places via Google Places, check availability on Booking.com, and place autonomous AI phone calls.
 
 ## Capabilities
 
@@ -37,7 +39,7 @@ Find contact details (phone, email, WhatsApp, Instagram, etc.) for accommodation
 concierge find-contact "<url>"
 ```
 
-### 2) Search for accommodations
+### 2) Search for places
 
 ```bash
 concierge search "hotels in San Francisco" --limit 5

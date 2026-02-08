@@ -14,7 +14,7 @@ export function searchCommand(program: Command, getContext: () => CliContext): v
   program
     .command('search')
     .alias('s')
-    .description('Search for accommodations using Google Places')
+    .description('Search for businesses and places using Google Places')
     .argument('<location>', 'Location to search (text query or "lat,lng" coordinates)')
     .option('-l, --limit <n>', 'Maximum number of results (default: 10, max: 20)')
     .option('--min-rating <n>', 'Minimum rating filter (0-5)')

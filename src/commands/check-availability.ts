@@ -42,7 +42,7 @@ export function checkAvailabilityCommand(program: Command, getContext: () => Cli
     .command('check-availability')
     .alias('ca')
     .alias('availability')
-    .description('Check hotel availability and prices on Booking.com')
+    .description('Check availability and prices on Booking.com')
     .argument('<query>', 'Hotel name or Booking.com URL')
     .requiredOption('-i, --check-in <date>', 'Check-in date (YYYY-MM-DD)')
     .requiredOption('-o, --check-out <date>', 'Check-out date (YYYY-MM-DD)')

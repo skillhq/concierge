@@ -1,6 +1,6 @@
-# Travel Concierge
+# Concierge
 
-Find accommodation contact details and place AI-powered booking calls.
+Personal AI concierge for contact lookup, availability checks, and autonomous phone calls.
 
 ## Installation
 
@@ -10,7 +10,7 @@ skill install @skillhq/concierge
 
 ## Features
 
-- **Contact Extraction**: Find phone, email, WhatsApp, and social media contacts from Airbnb, Booking.com, VRBO, and Expedia listings
+- **Contact Extraction**: Find phone, email, WhatsApp, and social media contacts from listings and businesses (Airbnb, Booking.com, VRBO, Expedia)
 - **AI Phone Calls**: Place autonomous phone calls with a goal-driven AI agent that handles the conversation until the goal is achieved
 
 ## System Dependencies (AI Calls)

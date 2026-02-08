@@ -645,7 +645,7 @@ export function callCommand(program: Command, getContext: () => CliContext): voi
 
   program
     .command('direct-booking')
-    .description('Book a hotel directly and negotiate a discount (uses customer info from config)')
+    .description('Book directly and negotiate a discount (uses customer info from config)')
     .argument('<phone>', 'Hotel phone number to call (E.164 format preferred)')
     .requiredOption('--hotel <name>', 'Hotel name (e.g., "Trisara Resort")')
     .requiredOption('-i, --check-in <date>', 'Check-in date (YYYY-MM-DD)')

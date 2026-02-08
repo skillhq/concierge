@@ -9,7 +9,7 @@ export function findContactCommand(program: Command, getContext: () => CliContex
     .command('find-contact')
     .alias('find')
     .alias('fc')
-    .description('Find contact details for an accommodation listing')
+    .description('Find contact details for a listing or business')
     .argument('<url>', 'Listing URL (Airbnb, Booking.com, VRBO, or Expedia)')
     .option('--html <file>', 'Path to saved HTML file (for offline/pre-fetched content)')
     .action(async (url: string, options: { html?: string }) => {

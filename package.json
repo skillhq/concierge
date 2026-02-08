@@ -1,7 +1,7 @@
 {
   "name": "@skillhq/concierge",
-  "version": "1.15.3",
-  "description": "Find contact details for accommodation listings (Airbnb, Booking.com, VRBO, Expedia)",
+  "version": "1.15.4",
+  "description": "Personal AI concierge for contact lookup, availability checks, and autonomous phone calls",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,7 +21,7 @@
     "format": "biome format --write ."
   },
   "keywords": [
-    "travel",
+    "ai-agent",
     "concierge",
     "airbnb",
     "booking",

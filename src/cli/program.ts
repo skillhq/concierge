@@ -31,7 +31,7 @@ export function createProgram(): Command {
 
   program
     .name('concierge')
-    .description('Find contact details for accommodation listings (Airbnb, Booking.com, VRBO, Expedia)')
+    .description('Personal AI concierge for contact lookup, availability checks, and autonomous phone calls')
     .version(pkg.version);
 
   // Global options
