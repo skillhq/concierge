@@ -1,6 +1,6 @@
 {
   "name": "@skillhq/concierge",
-  "version": "1.15.4",
+  "version": "1.15.5",
   "description": "Personal AI concierge for contact lookup, availability checks, and autonomous phone calls",
   "type": "module",
   "main": "dist/index.js",
