@@ -3,10 +3,10 @@
  */
 
 import type { ChildProcess } from 'node:child_process';
-import { spawn } from 'node:child_process';
+import { execSync, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { createWriteStream, mkdirSync, writeFileSync } from 'node:fs';
+import { createWriteStream, mkdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import * as readline from 'node:readline';
@@ -72,7 +72,19 @@ async function fetchAndSaveRecording(
 
       const audioBuffer = await downloadResponse.arrayBuffer();
       const recordingPath = join(logDir, `recording-${callSid}.wav`);
-      writeFileSync(recordingPath, Buffer.from(audioBuffer));
+      const rawPath = join(logDir, `recording-${callSid}.raw.wav`);
+      writeFileSync(rawPath, Buffer.from(audioBuffer));
+
+      // Twilio WAV files are mu-law encoded — convert to PCM WAV for standard playback
+      try {
+        execSync(`ffmpeg -y -i "${rawPath}" -acodec pcm_s16le "${recordingPath}" 2>/dev/null`, { stdio: 'pipe' });
+        try {
+          unlinkSync(rawPath);
+        } catch {}
+      } catch {
+        // ffmpeg unavailable or failed — fall back to the raw Twilio WAV
+        renameSync(rawPath, recordingPath);
+      }
 
       console.log(colors.success(`Recording saved: ${recordingPath}`));
       return recordingPath;
