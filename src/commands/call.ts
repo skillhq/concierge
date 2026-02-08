@@ -116,7 +116,7 @@ function createInfraLogPaths(
   const sanitizedPhone = phone ? phone.replace(/[^+\dA-Za-z]/g, '') : undefined;
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const suffix = randomUUID().slice(0, 8);
-  const runId = sanitizedPhone ? `${sanitizedPhone}_${timestamp}-${suffix}` : `${timestamp}-${suffix}`;
+  const runId = sanitizedPhone ? `${timestamp}_${sanitizedPhone}-${suffix}` : `${timestamp}-${suffix}`;
   const base = baseDir ?? join(homedir(), '.config', 'concierge', 'call-runs');
   const logDir = join(base, runId);
   mkdirSync(logDir, { recursive: true });
