@@ -285,8 +285,46 @@ async function stopManagedInfra(runtime: ManagedInfraRuntime): Promise<void> {
 function phoneticSpelling(name: string): string {
   return name
     .split(/\s+/)
-    .map((w) => w.split('').join('-').toUpperCase())
-    .join(' ');
+    .map((w) => `${w.split('').join(', ').toUpperCase()}.`)
+    .join('  ');
+}
+
+const DIGIT_WORDS: Record<string, string> = {
+  '0': 'zero',
+  '1': 'one',
+  '2': 'two',
+  '3': 'three',
+  '4': 'four',
+  '5': 'five',
+  '6': 'six',
+  '7': 'seven',
+  '8': 'eight',
+  '9': 'nine',
+};
+
+function phoneForSpeech(phone: string): string {
+  const digits = phone.replace(/[^0-9+]/g, '');
+  let prefix = '';
+  let i = 0;
+
+  if (digits.startsWith('+')) {
+    prefix = 'plus ';
+    i = 1;
+  }
+
+  const digitsPart = digits.slice(i);
+  const groups: string[] = [];
+  for (let j = 0; j < digitsPart.length; j += 3) {
+    groups.push(
+      digitsPart
+        .slice(j, j + 3)
+        .split('')
+        .map((d) => DIGIT_WORDS[d] ?? d)
+        .join(' '),
+    );
+  }
+
+  return prefix + groups.join(', ');
 }
 
 function formatDateForSpeech(dateStr: string): string {
@@ -472,7 +510,7 @@ function runCallOverControlSocket(
 
       const customerContext = `Customer: ${options.name} (to spell: ${phoneticSpelling(options.name)})
 Email: ${options.email}
-Phone: ${options.customerPhone}${options.context ? `\n${options.context}` : ''}`;
+Phone (to read aloud): ${phoneForSpeech(options.customerPhone)}${options.context ? `\n${options.context}` : ''}`;
 
       const msg: ClientMessage = {
         type: 'initiate_call',
