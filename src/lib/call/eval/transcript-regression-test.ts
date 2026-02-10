@@ -433,20 +433,14 @@ export async function runTranscriptRegressionTests(
     });
     await ai.getGreeting();
     await ai.respond('May I have your email address?');
-    await ai.respond(
-      'It is alexanderderekrein at gmail dot com. A-L-E-X-A-N-D-E-R-D-E-R-E-K-R-E-I-N.',
-    );
-    const response = await ai.respond(
-      'Would you mind to spell for me a little bit slowly, please?',
-    );
+    await ai.respond('It is alexanderderekrein at gmail dot com. A-L-E-X-A-N-D-E-R-D-E-R-E-K-R-E-I-N.');
+    const response = await ai.respond('Would you mind to spell for me a little bit slowly, please?');
     if (!response) {
       failures.push('Spell slowly: empty response');
     } else {
       const lower = response.toLowerCase();
       if (lower === 'sorry about that. please continue.') {
-        failures.push(
-          'Spell slowly: gave canned speed-complaint response instead of re-spelling email',
-        );
+        failures.push('Spell slowly: gave canned speed-complaint response instead of re-spelling email');
       }
       if (!includesAny(response, ['alexander', 'a-l-e', 'a l e', 'gmail', 'email'])) {
         failures.push('Spell slowly: should re-spell or reference the email address');
@@ -475,9 +469,7 @@ export async function runTranscriptRegressionTests(
     } else {
       const competitors = ['booking.com', 'expedia', 'agoda', 'hotels.com', 'trivago'];
       if (includesAny(response, competitors)) {
-        failures.push(
-          'Competitor pricing: response named a competitor platform — should say "online rate" instead',
-        );
+        failures.push('Competitor pricing: response named a competitor platform — should say "online rate" instead');
       }
     }
   } catch (error) {
@@ -500,7 +492,7 @@ export async function runTranscriptRegressionTests(
     if (!response) {
       failures.push('Accept callback: empty response');
     } else {
-      if (includesAny(response, ['prefer to complete', "prefer to finish", "i'd rather"])) {
+      if (includesAny(response, ['prefer to complete', 'prefer to finish', "i'd rather"])) {
         failures.push('Accept callback: AI resisted the callback instead of accepting gracefully');
       }
       if (!includesAny(response, ['sure', 'of course', 'no problem', 'call back', 'will do', 'absolutely'])) {
@@ -556,7 +548,7 @@ export async function runTranscriptRegressionTests(
     if (!response) {
       failures.push('Loyalty question: empty response');
     } else {
-      if (!includesAny(response, ['no', 'not a member', 'don\'t have', 'no membership', 'not currently'])) {
+      if (!includesAny(response, ['no', 'not a member', "don't have", 'no membership', 'not currently'])) {
         failures.push('Loyalty question: should answer directly that there is no membership');
       }
     }
@@ -581,9 +573,7 @@ export async function runTranscriptRegressionTests(
       failures.push('Echo cancellation: empty response');
     } else {
       if (!includesAny(response, ['non-refundable', 'non refundable', 'nonrefundable'])) {
-        failures.push(
-          'Echo cancellation: should echo back "non-refundable" to confirm the policy',
-        );
+        failures.push('Echo cancellation: should echo back "non-refundable" to confirm the policy');
       }
     }
   } catch (error) {
@@ -615,12 +605,9 @@ export async function runTranscriptRegressionTests(
       const hasJapanese = lower.includes('japanese');
       // If the AI mentions all 4 restaurants, it should maintain the lunch/dinner distinction
       if (hasNora && hasThai && hasItalian && hasJapanese) {
-        const hasLunchDinnerDistinction =
-          lower.includes('lunch') && lower.includes('dinner');
+        const hasLunchDinnerDistinction = lower.includes('lunch') && lower.includes('dinner');
         if (!hasLunchDinnerDistinction) {
-          failures.push(
-            'Structured info: listed all restaurants without maintaining lunch/dinner categories',
-          );
+          failures.push('Structured info: listed all restaurants without maintaining lunch/dinner categories');
         }
       }
     }
@@ -702,7 +689,9 @@ export async function runTranscriptRegressionTests(
     if (!response) {
       failures.push('Inquiry no confirmation: empty response');
     } else {
-      if (includesAny(response, ['confirmation number', 'confirmation email', 'send a confirmation', 'send confirmation'])) {
+      if (
+        includesAny(response, ['confirmation number', 'confirmation email', 'send a confirmation', 'send confirmation'])
+      ) {
         failures.push(
           'Inquiry no confirmation: AI asked for confirmation number/email on an inquiry call — no booking was made',
         );
@@ -724,9 +713,7 @@ export async function runTranscriptRegressionTests(
       context: 'Hotel: Trisara Resort. Restaurant: Age (steakhouse). Customer: Derek Rein.',
     });
     await ai.getGreeting();
-    const response = await ai.respond(
-      'The steakhouse staff will stand by around 2 PM. Like in 10 minutes.',
-    );
+    const response = await ai.respond('The steakhouse staff will stand by around 2 PM. Like in 10 minutes.');
     if (!response) {
       failures.push('Temporal callback: empty response');
     } else {
@@ -736,9 +723,7 @@ export async function runTranscriptRegressionTests(
         );
       }
       if (!includesAny(response, ['call back', 'wait', 'hold', '2', 'sure', 'understood', 'okay', 'no problem'])) {
-        failures.push(
-          'Temporal callback: should acknowledge the time and accept the callback or offer to wait',
-        );
+        failures.push('Temporal callback: should acknowledge the time and accept the callback or offer to wait');
       }
     }
   } catch (error) {
@@ -765,9 +750,7 @@ export async function runTranscriptRegressionTests(
     } else {
       const lower = response.toLowerCase();
       if (lower.includes('hage') || lower.includes('h-a-g-e') || lower.includes('h a g e')) {
-        failures.push(
-          'Spelled name: AI added phantom "H" to the name — should be "Age" (A-G-E) not "HAGE"',
-        );
+        failures.push('Spelled name: AI added phantom "H" to the name — should be "Age" (A-G-E) not "HAGE"');
       }
     }
   } catch (error) {
@@ -830,9 +813,7 @@ export async function runTranscriptRegressionTests(
         );
       }
       if (!includesAny(response, ['steakhouse', 'steak'])) {
-        failures.push(
-          'Venue name: response should mention the steakhouse (use info from goal/context)',
-        );
+        failures.push('Venue name: response should mention the steakhouse (use info from goal/context)');
       }
     }
   } catch (error) {
@@ -864,9 +845,7 @@ export async function runTranscriptRegressionTests(
       }
       // Should NOT just blindly hold without correcting
       if (lower.includes("sure, i'll hold") && !includesAny(response, ['three', '3'])) {
-        failures.push(
-          'Party size correction: AI just said "Sure, I\'ll hold" without correcting the wrong party size',
-        );
+        failures.push('Party size correction: AI just said "Sure, I\'ll hold" without correcting the wrong party size');
       }
     }
   } catch (error) {
@@ -898,12 +877,127 @@ export async function runTranscriptRegressionTests(
       // Should NOT give generic recovery like "didn't catch that"
       if (includesAny(response, ["didn't catch", 'could you repeat', 'sorry, what'])) {
         failures.push(
-          'Staff clarification: AI gave generic recovery phrase instead of answering the staff\'s question about party size',
+          "Staff clarification: AI gave generic recovery phrase instead of answering the staff's question about party size",
         );
       }
     }
   } catch (error) {
     failures.push(`Staff clarification test failed: ${error}`);
+  }
+
+  // Case 30: Post-hold re-engagement — staff returns after hold with "Hello?"
+  // Regression: +66630508322 (Little Paris, 2026-02-10) — after hold, staff said "Hello?" and
+  // AI gave canned "Sorry, I didn't catch that" instead of re-engaging naturally.
+  tests++;
+  try {
+    const ai = new ConversationAI({
+      apiKey: config.anthropicApiKey,
+      goal: 'Make a dinner reservation for 3 people at 6 PM tonight',
+      context: 'Restaurant: Little Paris French Bistronomy. Party size: 3. Time: 6 PM. Guest: Derek Rein.',
+    });
+    await ai.getGreeting();
+    await ai.respond('Hello, Little Paris. Hold on please.');
+    const response = await ai.respond('Hello?');
+    if (!response) {
+      failures.push('Post-hold re-engagement: empty response');
+    } else {
+      // Should NOT give canned "didn't catch that" — should re-engage
+      if (includesAny(response, ["didn't catch", "didn't catch that"])) {
+        failures.push('Post-hold re-engagement: AI gave "didn\'t catch that" instead of re-engaging after hold');
+      }
+    }
+  } catch (error) {
+    failures.push(`Post-hold re-engagement test failed: ${error}`);
+  }
+
+  // Case 31: Keyword-bearing staff question in accented English.
+  // Regression: +66630508322 (Little Paris, 2026-02-10) — Thai staff asked "Do you like to book
+  // for today?" but Deepgram scored it low-confidence, routing to unclear_speech handler.
+  tests++;
+  try {
+    const ai = new ConversationAI({
+      apiKey: config.anthropicApiKey,
+      goal: 'Make a dinner reservation for 3 people at 6 PM tonight',
+      context: 'Restaurant: Little Paris French Bistronomy. Party size: 3. Time: 6 PM. Guest: Derek Rein.',
+    });
+    await ai.getGreeting();
+    await ai.respond('Hello, Little Paris.');
+    const response = await ai.respond('Do you like to book for today?');
+    if (!response) {
+      failures.push('Keyword-bearing question: empty response');
+    } else {
+      // Must respond with booking details (today, tonight, this evening, yes, etc.)
+      if (!includesAny(response, ['yes', 'today', 'tonight', 'this evening', 'three', '3', 'six', '6 pm', '6pm'])) {
+        failures.push(
+          'Keyword-bearing question: AI did not respond with booking details to "Do you like to book for today?"',
+        );
+      }
+      // Should NOT give comprehension failure
+      if (includesAny(response, ["didn't catch", 'could you repeat', 'sorry, what'])) {
+        failures.push(
+          'Keyword-bearing question: AI gave comprehension failure instead of answering the booking question',
+        );
+      }
+    }
+  } catch (error) {
+    failures.push(`Keyword-bearing question test failed: ${error}`);
+  }
+
+  // Case 32: Alternative communication offer — staff offers to send confirmation message.
+  // Regression: +66630508322 (Little Paris, 2026-02-10) — staff offered to send LINE message
+  // to confirm, but AI ignored the offer and asked for a confirmation number.
+  tests++;
+  try {
+    const ai = new ConversationAI({
+      apiKey: config.anthropicApiKey,
+      goal: 'Make a dinner reservation for 3 people at 6 PM tonight',
+      context:
+        'Restaurant: Little Paris French Bistronomy. Party size: 3. Time: 6 PM. Guest: Derek Rein. Phone: +66 89 123 4567.',
+    });
+    await ai.getGreeting();
+    await ai.respond('Hello, Little Paris.');
+    await ai.respond('Okay, three people, six PM. I will send you message for the confirm.');
+    const history = ai.getHistory();
+    const lastResponse = history[history.length - 1]?.content || '';
+    // Should acknowledge the message offer, NOT ask for confirmation number
+    if (includesAny(lastResponse, ['confirmation number', 'what is the confirmation'])) {
+      failures.push(
+        "Alt communication: AI asked for confirmation number instead of accepting the staff's offer to send a message",
+      );
+    }
+  } catch (error) {
+    failures.push(`Alt communication test failed: ${error}`);
+  }
+
+  // Case 33: Seating preference question — staff asks inside or outside.
+  // Regression: +66630508322 (Little Paris, 2026-02-10) — staff asked seating preference,
+  // AI ignored it and repeated the booking summary.
+  tests++;
+  try {
+    const ai = new ConversationAI({
+      apiKey: config.anthropicApiKey,
+      goal: 'Make a dinner reservation for 3 people at 6 PM tonight',
+      context: 'Restaurant: Little Paris French Bistronomy. Party size: 3. Time: 6 PM. Guest: Derek Rein.',
+    });
+    await ai.getGreeting();
+    await ai.respond('Hello, Little Paris.');
+    const response = await ai.respond('Do you like to go outside or inside?');
+    if (!response) {
+      failures.push('Seating preference: empty response');
+    } else {
+      // Must address seating — mention inside, outside, or no preference
+      if (!includesAny(response, ['inside', 'outside', 'no preference', 'either', "doesn't matter", 'any'])) {
+        failures.push(
+          'Seating preference: AI did not address seating question — should mention inside/outside/no preference',
+        );
+      }
+      // Should NOT give comprehension failure
+      if (includesAny(response, ["didn't catch", 'could you repeat'])) {
+        failures.push('Seating preference: AI gave comprehension failure instead of addressing the seating question');
+      }
+    }
+  } catch (error) {
+    failures.push(`Seating preference test failed: ${error}`);
   }
 
   return {

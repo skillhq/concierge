@@ -512,7 +512,7 @@ export class CallSession extends EventEmitter {
   private async generateUnclearSpeechResponse(): Promise<void> {
     this.isProcessingResponse = true;
     try {
-      const response = this.conversationAI.respondToUnclearSpeech();
+      const response = await this.conversationAI.respondToUnclearSpeech();
       this.log(`[AI] Unclear speech response: "${response}"`);
 
       this.state.transcript.push({
@@ -719,7 +719,10 @@ export class CallSession extends EventEmitter {
 
         // Extract DTMF markers before speaking
         const dtmfMatches = [...chunk.matchAll(/\[DTMF:([0-9*#]+)\]/g)];
-        const speakableText = chunk.replace(/\[DTMF:([0-9*#]+)\]/g, '').replace('[CALL_COMPLETE]', '').trim();
+        const speakableText = chunk
+          .replace(/\[DTMF:([0-9*#]+)\]/g, '')
+          .replace('[CALL_COMPLETE]', '')
+          .trim();
 
         // Speak the text portion (without DTMF markers)
         if (speakableText) {
@@ -1064,10 +1067,12 @@ export class CallSession extends EventEmitter {
   private clearTwilioBuffer(): void {
     if (!this.mediaWs || !this.streamSid) return;
     try {
-      this.mediaWs.send(JSON.stringify({
-        event: 'clear',
-        streamSid: this.streamSid,
-      }));
+      this.mediaWs.send(
+        JSON.stringify({
+          event: 'clear',
+          streamSid: this.streamSid,
+        }),
+      );
       this.log('[Audio] Cleared Twilio buffer');
     } catch (err) {
       this.log(`[Audio] Clear buffer error: ${err}`);

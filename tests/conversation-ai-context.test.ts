@@ -31,15 +31,16 @@ describe('respondToUnclearSpeech', () => {
     });
   }
 
-  it('returns the canned unclear speech response', () => {
+  it('returns the canned unclear speech response for early conversation (no context)', async () => {
     const ai = createAI();
-    const response = ai.respondToUnclearSpeech();
+    // No prior messages → messages.length <= 2 → canned response (no LLM call)
+    const response = await ai.respondToUnclearSpeech();
     expect(response).toBe("Sorry, I didn't catch that. Could you say that again?");
   });
 
-  it('adds [unclear speech] and response to conversation history', () => {
+  it('adds [unclear speech] and response to conversation history for early conversation', async () => {
     const ai = createAI();
-    ai.respondToUnclearSpeech();
+    await ai.respondToUnclearSpeech();
     const history = ai.getHistory();
     expect(history).toHaveLength(2);
     expect(history[0]).toEqual({ role: 'user', content: '[unclear speech]' });
@@ -49,10 +50,10 @@ describe('respondToUnclearSpeech', () => {
     });
   });
 
-  it('preserves history continuity for subsequent turns', () => {
+  it('preserves history continuity for subsequent turns', async () => {
     const ai = createAI();
-    // Simulate an unclear speech exchange
-    ai.respondToUnclearSpeech();
+    // Simulate an unclear speech exchange (early conversation path)
+    await ai.respondToUnclearSpeech();
     const history = ai.getHistory();
     expect(history).toHaveLength(2);
     // Conversation should not be marked complete

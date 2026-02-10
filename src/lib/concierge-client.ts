@@ -8,8 +8,8 @@ import type {
   SourceInfo,
 } from './concierge-client-types.js';
 import { loadConfig } from './config.js';
-import { isGoplacesInstalled, searchWithDetails } from './goplaces.js';
 import type { PlaceDetails } from './goplaces.js';
+import { isGoplacesInstalled, searchWithDetails } from './goplaces.js';
 import { extractContacts } from './utils/contact-extractor.js';
 import { cleanPropertyName, emptyContacts, formatGoogleMapsUrl, mergeContacts } from './utils/formatters.js';
 import { parseListingUrl } from './utils/url-parser.js';
@@ -674,26 +674,33 @@ export class ConciergeClient {
       places = result.data;
     } else if (this.config.googlePlacesApiKey) {
       this.log('goplaces not installed, falling back to direct Google Places API (1 result max)', verbose);
-      console.warn('Warning: goplaces CLI not installed. Using direct API with 1-result limit. Install goplaces for full search.');
+      console.warn(
+        'Warning: goplaces CLI not installed. Using direct API with 1-result limit. Install goplaces for full search.',
+      );
       const placesResult = await this.searchGooglePlaces(query);
       if (!placesResult.success) return { success: false, error: placesResult.error };
 
       // Build a minimal PlaceDetails from the direct API result
-      places = [{
-        id: '',
-        name: query,
-        address: '',
-        phone: placesResult.data.contacts.phone?.[0],
-        website: placesResult.data.contacts.website,
-        mapsUrl: placesResult.data.contacts.googleMapsUrl,
-      }];
+      places = [
+        {
+          id: '',
+          name: query,
+          address: '',
+          phone: placesResult.data.contacts.phone?.[0],
+          website: placesResult.data.contacts.website,
+          mapsUrl: placesResult.data.contacts.googleMapsUrl,
+        },
+      ];
       // Extract name from source note if available
       const note = placesResult.data.sources[0]?.note;
       if (note?.startsWith('Matched: ')) {
         places[0].name = note.replace('Matched: ', '');
       }
     } else {
-      return { success: false, error: 'No search backend available. Install goplaces CLI or configure googlePlacesApiKey.' };
+      return {
+        success: false,
+        error: 'No search backend available. Install goplaces CLI or configure googlePlacesApiKey.',
+      };
     }
 
     if (places.length === 0) {
@@ -717,9 +724,10 @@ export class ConciergeClient {
   }
 
   private placeDetailsToDossier(place: PlaceDetails): ContactDossier {
-    const ratingNote = place.rating !== undefined
-      ? `Rating: ${place.rating}${place.userRatingsTotal ? ` (${place.userRatingsTotal} reviews)` : ''}`
-      : undefined;
+    const ratingNote =
+      place.rating !== undefined
+        ? `Rating: ${place.rating}${place.userRatingsTotal ? ` (${place.userRatingsTotal} reviews)` : ''}`
+        : undefined;
 
     return {
       property: {

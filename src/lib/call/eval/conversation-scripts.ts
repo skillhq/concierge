@@ -163,21 +163,18 @@ export const RESTAURANT_SCRIPTS: ConversationScript[] = [
     id: 'restaurant-party-size-confusion',
     name: 'Restaurant Party Size Confusion (Little Paris Regression)',
     goal: 'Make a dinner reservation for 3 people at 6 PM tonight',
-    context:
-      'Restaurant: Little Paris French Bistronomy. Party size: 3. Time: 6 PM. Guest: Derek Rein.',
+    context: 'Restaurant: Little Paris French Bistronomy. Party size: 3. Time: 6 PM. Guest: Derek Rein.',
     expectedOutcome: 'success',
     turns: [
       { human: 'Hello, Little Paris.' },
       {
         human: 'Yes, six people. One second.',
-        expectedBehavior:
-          'should correct the party size FIRST ("three people, not six") before acknowledging the hold',
+        expectedBehavior: 'should correct the party size FIRST ("three people, not six") before acknowledging the hold',
         pauseMs: 500,
       },
       {
         human: 'How many people?',
-        expectedBehavior:
-          'should answer directly with "three" or "3 people" — NOT give generic "didn\'t catch that"',
+        expectedBehavior: 'should answer directly with "three" or "3 people" — NOT give generic "didn\'t catch that"',
         pauseMs: 500,
       },
       {
@@ -672,6 +669,57 @@ export const EDGE_CASE_SCRIPTS: ConversationScript[] = [
       {
         human: 'Alright. Please hold one moment.',
         expectedBehavior: 'brief hold acknowledgement',
+        pauseMs: 500,
+      },
+    ],
+  },
+  {
+    id: 'little-paris-systemic-failures',
+    name: 'Little Paris - Systemic Failures (accented English, post-hold, logistics)',
+    goal: 'Make a dinner reservation for 3 people at 6 PM tonight',
+    context:
+      'Restaurant: Little Paris French Bistronomy. Party size: 3. Time: 6 PM. Guest: Derek Rein. Phone: +66 89 123 4567.',
+    expectedOutcome: 'success',
+    turns: [
+      {
+        human: 'Hello, Little Paris. Hold on please.',
+        expectedBehavior: 'should acknowledge and wait on hold',
+        pauseMs: 3000,
+      },
+      {
+        human: 'Hello?',
+        expectedBehavior: 'should re-engage naturally — NOT say "didn\'t catch that". Staff is returning from hold.',
+        pauseMs: 1000,
+      },
+      {
+        human: 'Hello? Are you still there?',
+        expectedBehavior: 'should confirm presence and briefly restate purpose',
+        pauseMs: 500,
+      },
+      {
+        human: 'Do you like to book for today?',
+        expectedBehavior: 'should respond with booking details (yes, today/tonight, 6 PM) — NOT comprehension failure',
+        pauseMs: 500,
+      },
+      {
+        human: 'How many people?',
+        expectedBehavior: 'should answer with party size: "three" or "3"',
+        pauseMs: 500,
+      },
+      {
+        human: 'Do you like to go outside or inside?',
+        expectedBehavior:
+          'should address seating preference (inside/outside/no preference) — NOT repeat booking summary',
+        pauseMs: 500,
+      },
+      {
+        human: 'Okay, three people, six PM. I will send you message for the confirm.',
+        expectedBehavior: 'should accept the message offer and provide phone number — NOT ask for confirmation number',
+        pauseMs: 500,
+      },
+      {
+        human: 'Okay, thank you. Goodbye.',
+        expectedBehavior: 'should thank them and end call with [CALL_COMPLETE]',
         pauseMs: 500,
       },
     ],

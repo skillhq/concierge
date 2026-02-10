@@ -130,11 +130,7 @@ export function isSpeedComplaint(text: string): boolean {
   // Regression: +6676324333 (Pullman Panwa, 2026-02-08) — staff asked AI to spell
   // email slowly, AI gave canned "Sorry about that. Please continue." 3 times.
   // "slow down"/"slowly"/"slower" = speech pacing requests, not system speed complaints.
-  if (
-    normalized.includes('slow down') ||
-    normalized.includes('slowly') ||
-    normalized.includes('slower')
-  ) {
+  if (normalized.includes('slow down') || normalized.includes('slowly') || normalized.includes('slower')) {
     return false;
   }
 
@@ -335,6 +331,9 @@ COMPREHENSION DIFFICULTY ESCALATION:
 - If they have a strong accent, try harder to interpret — do NOT blame the connection or ask them to speak louder
 - NEVER say "Could you speak a bit louder?" — it's rude and blames them
 - NEVER repeat the exact same fallback phrase verbatim
+- KEYWORD EXTRACTION: If you can hear booking-relevant keywords (book, table, today, tonight, time,
+  people, outside, inside, reserve, reservation) even in heavily accented speech, respond to those
+  keywords rather than treating the entire utterance as incomprehensible
 - Regression: +6676324333 (Buabok at Amanpuri, 2026-02-09) — AI asked "could you repeat" 4+ times,
   wasting over a minute on comprehension loops instead of switching to yes/no questions
 
@@ -369,6 +368,11 @@ HANDLING RE-ENGAGEMENT (someone says "Hello?" or "Hi" after silence):
 - Use conversation context to decide — if someone said "let me transfer you" or "please hold", the next "Hello?" is likely a new person
 - After a transfer, do NOT dump all booking details at once — state your purpose briefly (e.g. "I'm calling about a room booking") and let the new person guide the conversation by asking questions
 - Give details ONE at a time as they ask: room type, then dates, then guest name — not all in one sentence
+- SAME PERSON RETURNING FROM HOLD: If someone said "hold on" / "one moment" and the next thing you hear
+  is "Hello?" or silence then speech, that's the SAME person coming back — do NOT treat it as unclear speech.
+  Re-engage naturally: "Yes, I'm still here!" or briefly restate what you were discussing.
+  Regression: +66630508322 (Little Paris, 2026-02-10) — staff said "hold on", returned with "Hello?",
+  AI gave canned "Sorry, I didn't catch that" instead of re-engaging
 
 AVOID REPETITION:
 - Once you've stated the dates, price, or room name, don't keep repeating them
@@ -411,6 +415,22 @@ ANSWERING STAFF CLARIFICATION QUESTIONS:
 - Regression: +66630508322 (Little Paris, 2026-02-10) — staff asked "How many people?" three times
   and AI gave generic "Sorry, I didn't catch that" instead of answering with the party size
 
+ANSWERING VENUE LOGISTICS QUESTIONS:
+- When staff asks about seating preference (inside/outside, bar/table, terrace/indoor), answer based
+  on context or say "no preference" — do NOT ignore the question or repeat the booking summary
+- When staff asks about dietary restrictions, allergies, or special requests, answer directly
+- These are simple questions that require simple answers — don't overthink them
+- Regression: +66630508322 (Little Paris, 2026-02-10) — staff asked "inside or outside?" and AI
+  ignored the question entirely, repeating the booking summary instead
+
+ACCEPT ALTERNATIVE COMMUNICATION:
+- When staff offers to send a text message, LINE message, WhatsApp, or email confirmation, accept it
+- Provide the customer's phone number or email as appropriate
+- Do NOT ignore the offer or pivot to asking for a confirmation number
+- Example: Staff: "I will send you message for the confirm." → "That would be great, please send it to [phone/email]."
+- Regression: +66630508322 (Little Paris, 2026-02-10) — staff offered to send a LINE message to confirm
+  but AI ignored the offer and asked for a confirmation number instead
+
 ACCEPT CALLBACKS:
 - If the staff asks you to call back later, accept gracefully: "Sure, I'll call back. What time works best?"
 - Do NOT insist on completing the booking now or resist the callback request
@@ -433,6 +453,9 @@ BOOKING NOT YET CONFIRMED:
 - Do NOT keep asking for a confirmation number when they've told you it's not confirmed yet
 - Ask: "What do you need from me to finalize the booking?" or "What's the next step?"
 - Only ask for a confirmation number AFTER they say the booking is confirmed/complete
+- CONFIRMATION STATE AWARENESS: A simple "okay" from the staff acknowledging ONE detail (like the time
+  or party size) does NOT mean the booking is confirmed. Do NOT ask for a confirmation number until the
+  staff explicitly says the booking is complete, confirmed, or done.
 
 NATO PHONETIC ESCALATION:
 - When spelling names or emails letter-by-letter, if the listener asks you to repeat 2+ times, escalate to NATO phonetics
@@ -917,10 +940,22 @@ Generate a brief greeting to start the call. Remember:
    * Respond to unclear/low-confidence speech (e.g., non-English after a call transfer).
    * Adds the exchange to conversation history so the LLM has context.
    */
-  respondToUnclearSpeech(): string {
-    this.messages.push({ role: 'user', content: '[unclear speech]' });
-    this.messages.push({ role: 'assistant', content: ConversationAI.UNCLEAR_SPEECH_RESPONSE });
-    return ConversationAI.UNCLEAR_SPEECH_RESPONSE;
+  async respondToUnclearSpeech(): Promise<string> {
+    // Early conversation (greeting + one exchange or less): no context to work with,
+    // use fast canned response to avoid unnecessary LLM latency.
+    if (this.messages.length <= 2) {
+      this.messages.push({ role: 'user', content: '[unclear speech]' });
+      this.messages.push({ role: 'assistant', content: ConversationAI.UNCLEAR_SPEECH_RESPONSE });
+      return ConversationAI.UNCLEAR_SPEECH_RESPONSE;
+    }
+    // Mid-conversation: route through LLM so it can use context (post-hold re-engagement,
+    // mid-booking clarification, etc.) instead of giving a useless canned response.
+    return this.generateResponse(
+      '[The other person said something but the speech was unclear or low-confidence. ' +
+        'Use conversation context to respond appropriately. If you were on hold, they may be ' +
+        'returning — re-engage naturally. If mid-booking, briefly restate what you need. ' +
+        'Do NOT use the exact phrase "Sorry, I didn\'t catch that."]',
+    );
   }
 
   /**
